@@ -427,3 +427,51 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Ranking exports can contain Twitch usernames and user IDs.
+*.csv
+scores-backup.json
+ranking-quiz-*.json
+
+# Local secrets and machine-specific configuration.
+.env
+.env.*
+!.env.example
+*.local
+secrets.*
+*.key
+
+# Streamer.bot runtime data, backups and logs.
+data/
+backups/
+logs/
+*.log
+
+# Generated release archives and temporary files.
+*.zip
+*.7z
+*.rar
+*.bak
+*.tmp
+*.temp
+*~
+
+# C# and editor artifacts.
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# Node tooling is not required, but ignore it in development forks.
+node_modules/
+coverage/
+
+# Operating system files.
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
