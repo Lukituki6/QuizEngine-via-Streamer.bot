@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src ws://127.0.0.1:* ws://localhost:*; img-src data:; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Streamer.bot - Quiz Widzów Overlay v1.3.0</title>
+  <style>
+    :root {
+      --bg: rgba(10, 12, 21, 0.94);
+      --panel: rgba(23, 27, 43, 0.96);
+      --panel-2: rgba(31, 37, 58, 0.98);
+      --text: #f7f8ff;
+      --muted: #aab1ca;
+      --accent: #9b72ff;
+      --accent-2: #5a8cff;
+      --correct: #3fd18a;
+      --warning: #ffbf5e;
+      --danger: #ff5f7c;
+      --line: rgba(255, 255, 255, 0.1);
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    #quiz-root {
+      position: absolute;
+      left: 50%;
+      bottom: 40px;
+      width: min(1400px, calc(100vw - 64px));
+      transform: translate(-50%, 26px) scale(0.985);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 280ms ease, transform 320ms cubic-bezier(.2,.8,.2,1), visibility 280ms;
+    }
+
+    #quiz-root.visible {
+      transform: translate(-50%, 0) scale(1);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 10px;
+      filter: drop-shadow(var(--shadow));
+    }
+
+    .quiz-card,
+    .leaderboard-card {
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(155, 114, 255, 0.17), transparent 34%),
+        linear-gradient(155deg, var(--bg), rgba(11, 14, 24, 0.97));
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .quiz-card {
+      padding: 17px 19px 18px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 9px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .brand-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(155, 114, 255, 0.13), 0 0 22px rgba(155, 114, 255, 0.7);
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 29px;
+      padding: 5px 11px;
+      border: 1px solid rgba(155, 114, 255, 0.32);
+      border-radius: 999px;
+      background: rgba(155, 114, 255, 0.12);
+      color: #d9caff;
+    }
+
+    .status-pill.locked {
+      border-color: rgba(255, 191, 94, 0.35);
+      background: rgba(255, 191, 94, 0.12);
+      color: #ffdb9e;
+    }
+
+    .status-pill.revealed {
+      border-color: rgba(63, 209, 138, 0.35);
+      background: rgba(63, 209, 138, 0.12);
+      color: #a6f3cc;
+    }
+
+    .question {
+      margin: 0 0 13px;
+      font-size: clamp(24px, 1.75vw, 34px);
+      line-height: 1.13;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      text-wrap: balance;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .answers[data-count="1"] {
+      grid-template-columns: 1fr;
+    }
+
+    .answers[data-count="2"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .answer {
+      position: relative;
+      min-height: 49px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      overflow: hidden;
+      isolation: isolate;
+      transition: border-color 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+    }
+
+    .answer-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      z-index: -1;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(90, 140, 255, 0.42), rgba(155, 114, 255, 0.28));
+      transition: width 420ms cubic-bezier(.2,.8,.2,1), background 250ms ease;
+    }
+
+    .answer-inner {
+      display: grid;
+      grid-template-columns: 35px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      min-height: 47px;
+      padding: 6px 9px 6px 6px;
+    }
+
+    .answer-index {
+      display: grid;
+      place-items: center;
+      width: 35px;
+      height: 35px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9px;
+      background: rgba(7, 9, 16, 0.55);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .answer-text {
+      min-width: 0;
+      font-size: 16px;
+      line-height: 1.12;
+      font-weight: 760;
+      overflow-wrap: anywhere;
+    }
+
+    .answer-score {
+      min-width: 58px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .answer.correct {
+      border-color: rgba(63, 209, 138, 0.8);
+      box-shadow: 0 0 0 2px rgba(63, 209, 138, 0.13), 0 8px 30px rgba(63, 209, 138, 0.13);
+      transform: translateY(-1px);
+    }
+
+    .answer.correct .answer-fill {
+      background: linear-gradient(90deg, rgba(63, 209, 138, 0.5), rgba(63, 209, 138, 0.2));
+    }
+
+    .answer.correct .answer-index {
+      border-color: rgba(63, 209, 138, 0.5);
+      background: rgba(25, 104, 69, 0.67);
+    }
+
+    .answer.adjacent {
+      border-color: rgba(255, 191, 94, 0.72);
+      box-shadow: 0 0 0 2px rgba(255, 191, 94, 0.1), 0 8px 30px rgba(255, 191, 94, 0.09);
+    }
+
+    .answer.adjacent .answer-fill {
+      background: linear-gradient(90deg, rgba(255, 191, 94, 0.42), rgba(255, 191, 94, 0.15));
+    }
+
+    .answer.adjacent .answer-index {
+      border-color: rgba(255, 191, 94, 0.45);
+      background: rgba(111, 72, 20, 0.67);
+    }
+
+    .footerline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 11px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .command-hint {
+      color: #e7e0ff;
+    }
+
+    .command-hint strong {
+      color: #fff;
+    }
+
+    .leaderboard-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      padding: 15px 13px 13px;
+    }
+
+    .leaderboard-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 4px 10px;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .leaderboard-title span:last-child {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .leaders {
+      display: grid;
+      gap: 6px;
+    }
+
+    .leader {
+      display: grid;
+      grid-template-columns: 33px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 9px;
+      min-height: 40px;
+      padding: 5px 8px 5px 5px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.045);
+    }
+
+    .leader-position {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: rgba(155, 114, 255, 0.15);
+      color: #d9caff;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .leader:first-child .leader-position {
+      background: linear-gradient(135deg, #ffdc73, #f2a840);
+      color: #322100;
+    }
+
+    .leader-name {
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .leader-points {
+      color: #fff;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .empty-ranking {
+      display: grid;
+      flex: 1;
+      place-items: center;
+      min-height: 180px;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .connection-warning {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      padding: 10px 16px;
+      border: 1px solid rgba(255, 95, 124, 0.4);
+      border-radius: 999px;
+      background: rgba(33, 10, 17, 0.88);
+      color: #ffb3c1;
+      font-size: 14px;
+      font-weight: 800;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 200ms ease;
+    }
+
+    .connection-warning.show {
+      opacity: 1;
+    }
+
+    @media (max-width: 1180px) {
+      .answers {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .answers[data-count="1"] {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1050px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .leaderboard-card {
+        display: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      #quiz-root {
+        width: calc(100vw - 28px);
+        bottom: 18px;
+      }
+
+      .quiz-card {
+        padding: 18px;
+      }
+
+      .answers,
+      .answers[data-count="1"],
+      .answers[data-count="2"] {
+        grid-template-columns: 1fr;
+      }
+
+      .meta {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="quiz-root" aria-live="polite">
+    <div class="shell">
+      <section class="quiz-card">
+        <div class="topline">
+          <div class="brand"><span class="brand-dot"></span><span>Quiz widzów</span></div>
+          <div class="meta">
+            <span id="timer"></span>
+            <span id="status-pill" class="status-pill">Głosowanie</span>
+          </div>
+        </div>
+        <h1 id="question" class="question"></h1>
+        <div id="answers" class="answers"></div>
+        <div class="footerline">
+          <span id="hint" class="command-hint"></span>
+          <span id="vote-count"></span>
+        </div>
+      </section>
+
+      <aside class="leaderboard-card">
+        <div class="leaderboard-title">
+          <span>Ranking</span>
+          <span>Top 5</span>
+        </div>
+        <div id="leaders" class="leaders"></div>
+        <div id="empty-ranking" class="empty-ranking">Ranking pojawi się po przyznaniu pierwszych punktów.</div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="connection-warning" class="connection-warning">Brak połączenia ze Streamer.bot</div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const ACTION_NAME = 'QUIZ - Silnik';
+      const STATE_VARIABLE = 'localQuiz_state_v1';
+      const SCORES_VARIABLE = 'localQuiz_scores_v1';
+      const DEFAULT_WS_URL = 'ws://127.0.0.1:8080/';
+      const MAX_SOCKET_MESSAGE_LENGTH = 10 * 1024 * 1024;
+      const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost']);
+      const params = new URLSearchParams(window.location.search);
+      const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const DEMO = params.get('demo') === '1';
+
+      const root = document.getElementById('quiz-root');
+      const questionEl = document.getElementById('question');
+      const answersEl = document.getElementById('answers');
+      const statusEl = document.getElementById('status-pill');
+      const timerEl = document.getElementById('timer');
+      const hintEl = document.getElementById('hint');
+      const voteCountEl = document.getElementById('vote-count');
+      const leadersEl = document.getElementById('leaders');
+      const emptyRankingEl = document.getElementById('empty-ranking');
+      const warningEl = document.getElementById('connection-warning');
+
+      let socket = null;
+      let reconnectTimer = null;
+      let connectionAttempt = 0;
+      let currentState = null;
+      let lastRevision = -1;
+      let autoLockRound = '';
+      let requestCounter = 0;
+      let authRequestId = '';
+      let isAuthenticated = false;
+      let authenticationRejected = false;
+      let wsUrl = DEFAULT_WS_URL;
+      let password = '';
+      let allScores = [];
+      let lastFallbackSyncAt = 0;
+
+      const demoState = {
+        type: 'quiz-state',
+        revision: 1,
+        status: 'open',
+        visible: true,
+        question: 'Która z tych postaci pojawiła się w Dead by Daylight jako pierwsza?',
+        options: [
+          { index: 1, text: 'Ghost Face', count: 12 },
+          { index: 2, text: 'The Pig', count: 21 },
+          { index: 3, text: 'Nemesis', count: 8 },
+          { index: 4, text: 'The Executioner', count: 15 },
+          { index: 5, text: 'Albert Wesker', count: 6 },
+          { index: 6, text: 'Chucky', count: 3 },
+          { index: 7, text: 'The Artist', count: 9 },
+          { index: 8, text: 'The Unknown', count: 7 },
+          { index: 9, text: 'The Lich', count: 4 },
+          { index: 10, text: 'The Knight', count: 5 },
+          { index: 11, text: 'The Singularity', count: 6 },
+          { index: 12, text: 'The Good Guy', count: 4 }
+        ],
+        totalVotes: 100,
+        correctIndex: 0,
+        pointsPerCorrect: 3,
+        pointsPerAdjacent: 1,
+        scoringMode: 'adjacent',
+        partialIndices: [],
+        closesAt: Date.now() + 45000,
+        roundId: 'demo',
+        leaderboard: [
+          { position: 1, userName: 'Widz_01', points: 14 },
+          { position: 2, userName: 'Widz_02', points: 11 },
+          { position: 3, userName: 'Widz_03', points: 9 },
+          { position: 4, userName: 'Widz_04', points: 8 },
+          { position: 5, userName: 'Widz_05', points: 7 }
+        ]
+      };
+
+      function showWarning(message) {
+        warningEl.textContent =
+          String(message || 'Brak bezpiecznego połączenia').slice(0, 220);
+        warningEl.classList.add('show');
+      }
+
+      function hideWarning() {
+        warningEl.classList.remove('show');
+      }
+
+      function isTrustedPageOrigin() {
+        return location.protocol === 'http:' &&
+          LOOPBACK_HOSTS.has(location.hostname.toLowerCase());
+      }
+
+      function normalizeWebSocketUrl(rawUrl) {
+        const candidate = String(rawUrl || '').trim();
+        if (!candidate || candidate.length > 512) {
+          throw new Error('Nieprawidłowy adres WebSocket.');
+        }
+
+        let url;
+        try {
+          url = new URL(candidate);
+        } catch {
+          throw new Error('Nieprawidłowy adres WebSocket.');
+        }
+
+        if (url.protocol !== 'ws:' ||
+            !LOOPBACK_HOSTS.has(url.hostname.toLowerCase())) {
+          throw new Error('Overlay może łączyć się tylko z lokalnym WebSocketem.');
+        }
+        if (url.username || url.password || url.search || url.hash) {
+          throw new Error('Nieprawidłowy lokalny adres WebSocket.');
+        }
+        if (url.port) {
+          const port = Number(url.port);
+          if (!Number.isInteger(port) || port < 1 || port > 65535) {
+            throw new Error('Nieprawidłowy port WebSocket.');
+          }
+        }
+        return url.href;
+      }
+
+      function bytesToBase64(bytes) {
+        let binary = '';
+        for (let offset = 0; offset < bytes.length; offset += 8192) {
+          const chunk = bytes.subarray(offset, Math.min(offset + 8192, bytes.length));
+          binary += String.fromCharCode(...chunk);
+        }
+        return btoa(binary);
+      }
+
+      async function sha256Base64(value) {
+        if (!window.crypto?.subtle || !window.TextEncoder) {
+          throw new Error('OBS Browser nie obsługuje wymaganego SHA-256.');
+        }
+        const bytes = new TextEncoder().encode(String(value));
+        const digest = await window.crypto.subtle.digest('SHA-256', bytes);
+        return bytesToBase64(new Uint8Array(digest));
+      }
+
+      async function buildAuthentication(secretPassword, salt, challenge) {
+        const secret = await sha256Base64(
+          String(secretPassword) + String(salt)
+        );
+        return sha256Base64(secret + String(challenge));
+      }
+
+      function parseSocketMessage(rawMessage) {
+        if (typeof rawMessage !== 'string' ||
+            rawMessage.length > MAX_SOCKET_MESSAGE_LENGTH) {
+          return null;
+        }
+        try {
+          return JSON.parse(rawMessage);
+        } catch {
+          return null;
+        }
+      }
+
+      function verifyEnforce(rawUrl, timeoutMs = 3500) {
+        return new Promise(resolve => {
+          let probeSocket = null;
+          let probeSent = false;
+          let settled = false;
+          const probeId =
+            `quiz-overlay-enforce-${Date.now()}-${Math.random()}`;
+
+          const finish = result => {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            clearTimeout(timer);
+            if (probeSocket && probeSocket.readyState < WebSocket.CLOSING) {
+              probeSocket.close();
+            }
+            resolve(result);
+          };
+
+          const timer = setTimeout(() => finish(null), timeoutMs);
+          try {
+            probeSocket = new WebSocket(rawUrl);
+          } catch {
+            finish(null);
+            return;
+          }
+
+          probeSocket.addEventListener('message', event => {
+            const payload = parseSocketMessage(event.data);
+            if (!payload) {
+              return;
+            }
+            if (payload.request === 'Hello') {
+              if (!payload.authentication?.salt ||
+                  !payload.authentication?.challenge) {
+                finish(false);
+                return;
+              }
+              probeSent = true;
+              probeSocket.send(JSON.stringify({
+                request: 'GetInfo',
+                id: probeId
+              }));
+              return;
+            }
+            if (payload.id === probeId) {
+              finish(payload.status !== 'ok');
+            }
+          });
+          probeSocket.addEventListener('close', () => {
+            if (!settled) {
+              finish(probeSent ? true : null);
+            }
+          });
+          probeSocket.addEventListener('error', () => {
+            if (!settled) {
+              finish(null);
+            }
+          });
+        });
+      }
+
+      function stopSocket(activeSocket) {
+        if (socket === activeSocket) {
+          socket = null;
+        }
+        if (activeSocket && activeSocket.readyState < WebSocket.CLOSING) {
+          activeSocket.close();
+        }
+      }
+
+      async function handleHello(payload, activeSocket, attempt) {
+        if (!payload.authentication?.salt ||
+            !payload.authentication?.challenge) {
+          authenticationRejected = true;
+          showWarning('Włącz Authentication + Enforce w Streamer.bot');
+          stopSocket(activeSocket);
+          return;
+        }
+
+        try {
+          const authentication = await buildAuthentication(
+            password,
+            payload.authentication.salt,
+            payload.authentication.challenge
+          );
+          if (socket !== activeSocket || attempt !== connectionAttempt) {
+            return;
+          }
+          authRequestId =
+            `quiz-overlay-auth-${Date.now()}-${++requestCounter}`;
+          activeSocket.send(JSON.stringify({
+            request: 'Authenticate',
+            id: authRequestId,
+            authentication
+          }));
+          showWarning('Sprawdzanie hasła overlayu…');
+        } catch (error) {
+          authenticationRejected = true;
+          showWarning(error?.message || 'Błąd uwierzytelniania overlayu');
+          stopSocket(activeSocket);
+        }
+      }
+
+      function connect() {
+        const attempt = ++connectionAttempt;
+        clearTimeout(reconnectTimer);
+        if (socket) {
+          const previousSocket = socket;
+          socket = null;
+          previousSocket.close();
+        }
+        isAuthenticated = false;
+
+        if (DEMO) {
+          hideWarning();
+          applyState(demoState);
+          return;
+        }
+        if (!isTrustedPageOrigin()) {
+          showWarning('Otwórz overlay lokalnie z 127.0.0.1');
+          return;
+        }
+
+        try {
+          wsUrl = normalizeWebSocketUrl(
+            fragment.get('ws') || DEFAULT_WS_URL
+          );
+        } catch (error) {
+          showWarning(error?.message || 'Nieprawidłowy lokalny WebSocket');
+          return;
+        }
+
+        password = fragment.get('password') || '';
+        if (password.length < 12 || password.length > 256) {
+          showWarning('W panelu kliknij „Skopiuj URL overlayu” i wklej go do OBS');
+          return;
+        }
+
+        authenticationRejected = false;
+        showWarning('Łączenie overlayu ze Streamer.bot…');
+        let activeSocket;
+        try {
+          activeSocket = new WebSocket(wsUrl);
+          socket = activeSocket;
+        } catch {
+          scheduleReconnect();
+          return;
+        }
+
+        activeSocket.addEventListener('message', event => {
+          if (socket === activeSocket && attempt === connectionAttempt) {
+            handleSocketMessage(event.data, activeSocket, attempt);
+          }
+        });
+
+        activeSocket.addEventListener('close', () => {
+          if (socket !== activeSocket) {
+            return;
+          }
+          socket = null;
+          isAuthenticated = false;
+          if (!authenticationRejected) {
+            scheduleReconnect();
+          }
+        });
+        activeSocket.addEventListener('error', () => {
+          if (socket === activeSocket) {
+            showWarning('Błąd bezpiecznego połączenia overlayu');
+          }
+        });
+      }
+
+      function scheduleReconnect() {
+        showWarning('Rozłączono — ponawiam bezpieczne połączenie…');
+        clearTimeout(reconnectTimer);
+        reconnectTimer = setTimeout(connect, 2200);
+      }
+
+      function doAction(args, refreshAfter = true) {
+        if (!isAuthenticated ||
+            !socket ||
+            socket.readyState !== WebSocket.OPEN) {
+          return false;
+        }
+
+        socket.send(JSON.stringify({
+          request: 'DoAction',
+          action: { name: ACTION_NAME },
+          args,
+          id: `quiz-overlay-${Date.now()}-${++requestCounter}`
+        }));
+        if (refreshAfter) {
+          window.setTimeout(requestGlobals, 150);
+        }
+        return true;
+      }
+
+      function parseJson(value) {
+        if (value && typeof value === 'object') {
+          return value;
+        }
+        if (typeof value !== 'string') {
+          return null;
+        }
+        try {
+          return JSON.parse(value);
+        } catch {
+          return null;
+        }
+      }
+
+      function walkMessageObjects(value, visitor, depth = 0, seen = new Set()) {
+        if (depth > 7) {
+          return;
+        }
+
+        let current = value;
+        if (typeof current === 'string') {
+          current = parseJson(current);
+        }
+        if (!current || typeof current !== 'object' || seen.has(current)) {
+          return;
+        }
+
+        seen.add(current);
+        visitor(current);
+
+        for (const child of Object.values(current)) {
+          if (child && (typeof child === 'object' || typeof child === 'string')) {
+            walkMessageObjects(child, visitor, depth + 1, seen);
+          }
+        }
+      }
+
+      async function handleSocketMessage(rawMessage, activeSocket, attempt) {
+        const direct = parseSocketMessage(rawMessage);
+        if (!direct) {
+          return;
+        }
+
+        if (direct.request === 'Hello') {
+          await handleHello(direct, activeSocket, attempt);
+          return;
+        }
+
+        if (direct.id === authRequestId) {
+          if (direct.status !== 'ok') {
+            authenticationRejected = true;
+            showWarning('Błędne hasło WebSocket w URL overlayu');
+            stopSocket(activeSocket);
+            return;
+          }
+
+          showWarning('Hasło poprawne — sprawdzanie Enforce…');
+          const enforceEnabled = await verifyEnforce(wsUrl);
+          if (socket !== activeSocket || attempt !== connectionAttempt) {
+            return;
+          }
+          if (enforceEnabled !== true) {
+            authenticationRejected = true;
+            showWarning(
+              enforceEnabled === false
+                ? 'Włącz Enforce w WebSocket Server'
+                : 'Nie udało się potwierdzić ustawienia Enforce'
+            );
+            stopSocket(activeSocket);
+            return;
+          }
+
+          isAuthenticated = true;
+          lastRevision = -1;
+          hideWarning();
+          doAction({ quizOperation: 'sync' }, false);
+          requestGlobals();
+          return;
+        }
+
+        if (!isAuthenticated) {
+          return;
+        }
+
+        walkMessageObjects(direct, payload => {
+          if (payload.type === 'quiz-state') {
+            applyState(payload);
+          } else if (payload.type === 'quiz-scores') {
+            allScores = normalizeStoredScores(payload.scores || []);
+            renderRanking(allScores);
+          } else if (payload.status === 'ok' && payload.variable) {
+            handleGlobalResponse(payload);
+          } else if (payload.status === 'ok' && payload.variables) {
+            handleGlobalsResponse(payload);
+          }
+        });
+      }
+
+      function requestGlobal(variable, persisted, kind) {
+        if (!isAuthenticated ||
+            !socket ||
+            socket.readyState !== WebSocket.OPEN) {
+          return false;
+        }
+        socket.send(JSON.stringify({
+          request: 'GetGlobal',
+          variable,
+          persisted,
+          id: `quiz-overlay-global-${kind}-${Date.now()}-${++requestCounter}`
+        }));
+        return true;
+      }
+
+      function requestGlobals() {
+        if (DEMO ||
+            !isAuthenticated ||
+            !socket ||
+            socket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+        requestGlobal(STATE_VARIABLE, false, 'state');
+        requestGlobal(SCORES_VARIABLE, true, 'scores');
+
+        const now = Date.now();
+        if (now - lastFallbackSyncAt >= 3000) {
+          lastFallbackSyncAt = now;
+          doAction({ quizOperation: 'sync' }, false);
+        }
+      }
+
+      function handleGlobalResponse(payload) {
+        const id = String(payload.id || '');
+        const variable = payload.variable || {};
+        const value = parseJson(variable.value);
+        if (!value) {
+          return;
+        }
+        if (id.includes('-global-state-') ||
+            variable.name === STATE_VARIABLE) {
+          applyState(normalizeStoredState(value));
+        } else if (id.includes('-global-scores-') ||
+                   variable.name === SCORES_VARIABLE) {
+          allScores = normalizeStoredScores(value);
+          renderRanking(allScores);
+        }
+      }
+
+      function handleGlobalsResponse(payload) {
+        const rawVariables = payload.variables || {};
+        const variables = Array.isArray(rawVariables)
+          ? rawVariables
+          : Object.values(rawVariables);
+
+        for (const variable of variables) {
+          if (!variable || !variable.name) {
+            continue;
+          }
+          handleGlobalResponse({
+            status: 'ok',
+            id: payload.id || '',
+            variable
+          });
+        }
+      }
+
+      function normalizeScoringMode(value) {
+        return String(value || '').toLowerCase() === 'manual'
+          ? 'manual'
+          : 'adjacent';
+      }
+
+      function normalizePartialIndices(value, optionCount, correctIndex) {
+        const source = Array.isArray(value) ? value : [];
+        return [...new Set(source
+          .map(Number)
+          .filter(index =>
+            Number.isInteger(index) &&
+            index >= 1 &&
+            index <= optionCount &&
+            index !== correctIndex))]
+          .sort((a, b) => a - b);
+      }
+
+      function normalizeStoredState(stored) {
+        if (stored.type === 'quiz-state') {
+          const normalized = { ...stored };
+          const options = Array.isArray(normalized.options) ? normalized.options : [];
+          const correctIndex = Number(normalized.correctIndex || 0);
+          normalized.scoringMode = normalizeScoringMode(normalized.scoringMode);
+          normalized.partialIndices = normalizePartialIndices(
+            normalized.partialIndices,
+            options.length,
+            correctIndex);
+          if (normalized.status === 'revealed' &&
+              Number(normalized.pointsPerAdjacent || 0) > 0 &&
+              normalized.scoringMode === 'adjacent' &&
+              normalized.partialIndices.length === 0) {
+            normalized.partialIndices = options
+              .map(option => Number(option.index))
+              .filter(index => Math.abs(index - correctIndex) === 1);
+          }
+          return normalized;
+        }
+        const status = String(stored.Status ?? stored.status ?? 'idle').toLowerCase();
+        const storedOptions = Array.isArray(stored.Options)
+          ? stored.Options
+          : Array.isArray(stored.options)
+            ? stored.options
+            : [];
+        const votes = stored.Votes ?? stored.votes ?? {};
+        const counts = new Array(storedOptions.length).fill(0);
+        for (const choice of Object.values(votes)) {
+          const index = Number(choice);
+          if (Number.isInteger(index) && index >= 1 && index <= counts.length) {
+            counts[index - 1]++;
+          }
+        }
+        const correctIndex = status === 'revealed'
+          ? Number(stored.CorrectIndex ?? stored.correctIndex ?? 0)
+          : 0;
+        const scoringMode = normalizeScoringMode(
+          stored.ScoringMode ?? stored.scoringMode);
+        let partialIndices = normalizePartialIndices(
+          stored.PartialIndices ?? stored.partialIndices,
+          storedOptions.length,
+          correctIndex);
+        if (status === 'revealed' &&
+            Number(stored.PointsPerAdjacent ?? stored.pointsPerAdjacent ?? 0) > 0 &&
+            scoringMode === 'adjacent' &&
+            partialIndices.length === 0) {
+          partialIndices = storedOptions
+            .map((_, index) => index + 1)
+            .filter(index => Math.abs(index - correctIndex) === 1);
+        }
+
+        return {
+          type: 'quiz-state',
+          revision: Number(stored.Revision ?? stored.revision ?? 0),
+          status,
+          visible: Boolean(stored.Visible ?? stored.visible),
+          question: String(stored.Question ?? stored.question ?? ''),
+          options: storedOptions.map((option, index) => ({
+            index: index + 1,
+            text: String(option.Text ?? option.text ?? ''),
+            count: counts[index]
+          })),
+          totalVotes: Object.keys(votes).length,
+          correctIndex,
+          pointsPerCorrect: Number(stored.PointsPerCorrect ?? stored.pointsPerCorrect ?? 1),
+          pointsPerAdjacent: Number(stored.PointsPerAdjacent ?? stored.pointsPerAdjacent ?? 0),
+          scoringMode,
+          partialIndices,
+          startedAt: Number(stored.StartedAt ?? stored.startedAt ?? 0),
+          closesAt: Number(stored.ClosesAt ?? stored.closesAt ?? 0),
+          roundId: String(stored.RoundId ?? stored.roundId ?? ''),
+          leaderboard: allScores.slice(0, 10)
+        };
+      }
+
+      function normalizeStoredScores(stored) {
+        const entries = Array.isArray(stored) ? stored : Object.values(stored);
+        return entries
+          .filter(Boolean)
+          .map(entry => ({
+            userName: String(entry.UserName ?? entry.userName ?? 'Widz'),
+            points: Number(entry.Points ?? entry.points ?? 0),
+            correct: Number(entry.CorrectAnswers ?? entry.correct ?? 0),
+            answered: Number(entry.AnsweredQuestions ?? entry.answered ?? 0)
+          }))
+          .sort((a, b) =>
+            b.points - a.points ||
+            b.correct - a.correct ||
+            a.answered - b.answered ||
+            a.userName.localeCompare(b.userName, 'pl', { sensitivity: 'base' }))
+          .map((entry, index) => ({ ...entry, position: index + 1 }));
+      }
+
+      function applyState(state) {
+        const revision = Number(state.revision || 0);
+        if (revision < lastRevision) {
+          return;
+        }
+        lastRevision = revision;
+        currentState = state;
+
+        const shouldShow = Boolean(state.visible) && state.status !== 'idle';
+        root.classList.toggle('visible', shouldShow);
+        if (!shouldShow) {
+          return;
+        }
+
+        questionEl.textContent = state.question || 'Quiz';
+        renderStatus(state.status);
+        renderAnswers(state);
+        renderRanking(Array.isArray(state.leaderboard) ? state.leaderboard : []);
+        updateTimer();
+      }
+
+      function isPartialAnswer(state, optionIndex) {
+        if (!state || state.status !== 'revealed' ||
+            Number(state.pointsPerAdjacent || 0) <= 0) {
+          return false;
+        }
+
+        const partialIndices = normalizePartialIndices(
+          state.partialIndices,
+          Array.isArray(state.options) ? state.options.length : 0,
+          Number(state.correctIndex || 0));
+        if (partialIndices.length > 0) {
+          return partialIndices.includes(Number(optionIndex));
+        }
+
+        return normalizeScoringMode(state.scoringMode) === 'adjacent' &&
+          Math.abs(Number(state.correctIndex) - Number(optionIndex)) === 1;
+      }
+
+      function renderStatus(status) {
+        statusEl.className = 'status-pill';
+        if (status === 'locked') {
+          statusEl.classList.add('locked');
+          statusEl.textContent = 'Głosowanie zamknięte';
+        } else if (status === 'revealed') {
+          statusEl.classList.add('revealed');
+          statusEl.textContent = 'Poprawna odpowiedź';
+        } else {
+          statusEl.textContent = 'Głosowanie trwa';
+        }
+      }
+
+      function renderAnswers(state) {
+        answersEl.replaceChildren();
+        const options = Array.isArray(state.options) ? state.options : [];
+        answersEl.dataset.count = String(options.length);
+        const total = Math.max(0, Number(state.totalVotes || 0));
+
+        for (const option of options) {
+          const count = Math.max(0, Number(option.count || 0));
+          const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+          const item = document.createElement('div');
+          item.className = 'answer';
+          if (state.status === 'revealed' && Number(state.correctIndex) === Number(option.index)) {
+            item.classList.add('correct');
+          } else if (isPartialAnswer(state, option.index)) {
+            item.classList.add('adjacent');
+          }
+
+          const fill = document.createElement('div');
+          fill.className = 'answer-fill';
+          fill.style.width = `${percentage}%`;
+
+          const inner = document.createElement('div');
+          inner.className = 'answer-inner';
+
+          const index = document.createElement('span');
+          index.className = 'answer-index';
+          index.textContent = `!${option.index}`;
+
+          const text = document.createElement('span');
+          text.className = 'answer-text';
+          text.textContent = option.text || '';
+
+          const score = document.createElement('span');
+          score.className = 'answer-score';
+          let pointsForOption = 0;
+          if (state.status === 'revealed') {
+            if (Number(state.correctIndex) === Number(option.index)) {
+              pointsForOption = Number(state.pointsPerCorrect || 0);
+            } else if (isPartialAnswer(state, option.index)) {
+              pointsForOption = Number(state.pointsPerAdjacent || 0);
+            }
+          }
+          score.textContent = pointsForOption > 0
+            ? `${count} · ${percentage}% · +${pointsForOption} pkt`
+            : `${count} · ${percentage}%`;
+
+          inner.append(index, text, score);
+          item.append(fill, inner);
+          answersEl.append(item);
+        }
+
+        if (state.status === 'open') {
+          hintEl.innerHTML = `Wpisz na czacie <strong>!1–!${options.length}</strong>`;
+        } else if (state.status === 'locked') {
+          hintEl.textContent = 'Czekamy na ujawnienie poprawnej odpowiedzi';
+        } else {
+          const correct = options.find(x => Number(x.index) === Number(state.correctIndex));
+          const partialPoints = Number(state.pointsPerAdjacent || 0);
+          const partialCommands = options
+            .filter(x => isPartialAnswer(state, x.index))
+            .map(x => `!${x.index}`);
+          if (correct && partialPoints > 0 && partialCommands.length) {
+            hintEl.textContent =
+              `Odpowiedź: ${correct.index}) ${correct.text} · ` +
+              `${partialCommands.join(', ')} po ${partialPoints} pkt`;
+          } else {
+            hintEl.textContent = correct
+              ? `Odpowiedź: ${correct.index}) ${correct.text}`
+              : 'Wynik rundy';
+          }
+        }
+
+        voteCountEl.textContent = total === 1 ? '1 oddany głos' : `${total} oddanych głosów`;
+      }
+
+      function renderRanking(leaders) {
+        leadersEl.replaceChildren();
+        const top = leaders.slice(0, 5);
+        emptyRankingEl.style.display = top.length ? 'none' : 'grid';
+
+        for (const leader of top) {
+          const row = document.createElement('div');
+          row.className = 'leader';
+
+          const position = document.createElement('span');
+          position.className = 'leader-position';
+          position.textContent = leader.position;
+
+          const name = document.createElement('span');
+          name.className = 'leader-name';
+          name.textContent = leader.userName || 'Widz';
+
+          const points = document.createElement('span');
+          points.className = 'leader-points';
+          points.textContent = `${Number(leader.points || 0)} pkt`;
+
+          row.append(position, name, points);
+          leadersEl.append(row);
+        }
+      }
+
+      function updateTimer() {
+        if (!currentState) {
+          timerEl.textContent = '';
+          return;
+        }
+
+        const closesAt = Number(currentState.closesAt || 0);
+        if (currentState.status !== 'open' || closesAt <= 0) {
+          timerEl.textContent = '';
+          return;
+        }
+
+        const leftMs = closesAt - Date.now();
+        const leftSeconds = Math.max(0, Math.ceil(leftMs / 1000));
+        timerEl.textContent = `${leftSeconds} s`;
+
+        if (leftMs <= 0 && currentState.roundId && autoLockRound !== currentState.roundId) {
+          autoLockRound = currentState.roundId;
+          doAction({ quizOperation: 'lockExpired' });
+        }
+      }
+
+      window.setInterval(updateTimer, 250);
+      window.setInterval(requestGlobals, 700);
+      window.addEventListener('beforeunload', () => {
+        authenticationRejected = true;
+        clearTimeout(reconnectTimer);
+        if (socket) {
+          const activeSocket = socket;
+          socket = null;
+          activeSocket.close();
+        }
+      });
+
+      connect();
+    })();
+  </script>
+</body>
+</html>

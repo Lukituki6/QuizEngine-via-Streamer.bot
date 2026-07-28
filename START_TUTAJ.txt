@@ -1,0 +1,58 @@
+STREAMER.BOT - QUIZ WIDZÓW v1.3.0
+==================================
+
+Pełny poradnik instalacji, aktualizacji, komend, CSV i bezpieczeństwa:
+README.md
+
+SZYBKA INSTALACJA
+-----------------
+
+1. W Streamer.bot utwórz akcję o dokładnej nazwie:
+   QUIZ - Silnik
+
+2. Dodaj Core > C# > Execute C# Code, wklej cały QuizEngine.cs,
+   kliknij Find Refs, a potem Compile.
+
+3. Do tej samej akcji dodaj jeden trigger:
+   Twitch > Chat > Message
+
+4. WebSocket Server:
+   - Auto Start: WYŁĄCZONE (zalecane)
+   - Address/Host: 127.0.0.1
+   - Port: 8080
+   - Endpoint: /
+   - Authentication: WŁĄCZONE
+   - Enforce: WŁĄCZONE
+   - Password: własne i unikalne, minimum 12 znaków
+
+5. HTTP Server:
+   - Auto Start: WYŁĄCZONE (zalecane)
+   - Host: 127.0.0.1
+   - Port: 7474
+   - mapping quiz wskazuje TEN folder v1.3.0
+
+6. Otwórz:
+   http://127.0.0.1:7474/quiz/panel.html?v=130
+
+7. Wpisz hasło WebSocket i kliknij „Połącz bezpiecznie”.
+
+8. Kliknij „Skopiuj URL overlayu” i wklej adres do Browser Source w OBS.
+   Ustaw 1920 x 1080.
+
+KOMENDY
+-------
+
+Widzowie:
+!1-!12, !punkty, !ranking
+
+Broadcaster i moderatorzy:
+!quiz pomoc
+
+WAŻNE
+------
+
+- Nie wpisuj hasła do QuizEngine.cs ani plików repozytorium.
+- Nie udostępniaj URL overlayu; zawiera hasło po znaku #.
+- Nie ustawiaj WebSocket ani HTTP Server na 0.0.0.0.
+- Nie wyłączaj Enforce.
+- Automatyczne wiadomości startu, zamknięcia i wyniku są wyciszone.

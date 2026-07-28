@@ -1,0 +1,3154 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src ws://127.0.0.1:* ws://localhost:*; img-src data: blob:; font-src data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Streamer.bot - Panel Quizu Widzów v1.3.0</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090b12;
+      --surface: #111520;
+      --surface-2: #181d2b;
+      --surface-3: #202638;
+      --text: #f5f6ff;
+      --muted: #9ca5bf;
+      --accent: #9870ff;
+      --accent-hover: #aa89ff;
+      --blue: #5b8dff;
+      --green: #3dd18a;
+      --yellow: #ffbf5e;
+      --red: #ff607d;
+      --line: rgba(255, 255, 255, 0.09);
+      --shadow: 0 20px 70px rgba(0, 0, 0, 0.34);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% -10%, rgba(152, 112, 255, 0.19), transparent 28rem),
+        radial-gradient(circle at 90% 10%, rgba(91, 141, 255, 0.12), transparent 25rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.42;
+    }
+
+    .page {
+      width: min(1480px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 30px 0 50px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(152, 112, 255, 0.45);
+      border-radius: 15px;
+      background: linear-gradient(145deg, rgba(152, 112, 255, 0.3), rgba(91, 141, 255, 0.14));
+      box-shadow: 0 10px 35px rgba(152, 112, 255, 0.18);
+      font-size: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .connection {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(17, 21, 32, 0.78);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .connection-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 0 5px rgba(255, 96, 125, 0.11);
+    }
+
+    .connection.connected .connection-dot {
+      background: var(--green);
+      box-shadow: 0 0 0 5px rgba(61, 209, 138, 0.11);
+    }
+
+    .connection.connected {
+      color: #b9f5d8;
+    }
+
+    .security-card {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 18px;
+      padding: 15px 17px;
+      border: 1px solid rgba(152, 112, 255, 0.3);
+      border-radius: 15px;
+      background: rgba(17, 21, 32, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .security-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .security-note {
+      grid-column: 1 / -1;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(390px, 0.92fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: linear-gradient(155deg, rgba(24, 29, 43, 0.96), rgba(14, 18, 28, 0.98));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 850;
+    }
+
+    .card-kicker {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    label,
+    .field-label {
+      color: #d9dcef;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    textarea,
+    input,
+    select {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 11px;
+      outline: none;
+      background: rgba(6, 9, 15, 0.55);
+      color: var(--text);
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      border-color: rgba(152, 112, 255, 0.8);
+      box-shadow: 0 0 0 3px rgba(152, 112, 255, 0.13);
+    }
+
+    textarea {
+      min-height: 84px;
+      padding: 12px 13px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    input,
+    select {
+      min-height: 43px;
+      padding: 9px 11px;
+    }
+
+    .answers-editor {
+      display: grid;
+      gap: 9px;
+    }
+
+    .template-box {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 14px;
+      border: 1px solid rgba(152, 112, 255, 0.22);
+      border-radius: 13px;
+      background:
+        linear-gradient(145deg, rgba(152, 112, 255, 0.09), rgba(91, 141, 255, 0.035));
+    }
+
+    .template-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .template-heading .field-label {
+      font-size: 14px;
+    }
+
+    .template-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .template-create-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .template-row .button {
+      min-height: 43px;
+      white-space: nowrap;
+    }
+
+    .template-summary {
+      min-height: 17px;
+    }
+
+    .answer-row {
+      display: grid;
+      grid-template-columns: 39px minmax(0, 1fr) 39px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .answer-number {
+      display: grid;
+      place-items: center;
+      width: 39px;
+      height: 39px;
+      border: 1px solid rgba(152, 112, 255, 0.25);
+      border-radius: 10px;
+      background: rgba(152, 112, 255, 0.1);
+      color: #d9ccff;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .remove-answer {
+      display: grid;
+      place-items: center;
+      width: 39px;
+      height: 39px;
+      border-radius: 10px;
+      background: rgba(255, 96, 125, 0.09);
+      color: #ff9caf;
+      font-size: 18px;
+    }
+
+    .remove-answer:hover {
+      background: rgba(255, 96, 125, 0.17);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 18px;
+    }
+
+    .button {
+      min-height: 42px;
+      padding: 10px 14px;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      background: var(--surface-3);
+      color: #e7e9f7;
+      font-size: 13px;
+      font-weight: 850;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+    }
+
+    .button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: #2a3249;
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, var(--accent), #7554df);
+      color: white;
+      box-shadow: 0 9px 28px rgba(152, 112, 255, 0.23);
+    }
+
+    .button.primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--accent-hover), #8462eb);
+    }
+
+    .button.success {
+      border-color: rgba(61, 209, 138, 0.25);
+      background: rgba(61, 209, 138, 0.12);
+      color: #aef0d0;
+    }
+
+    .button.warning {
+      border-color: rgba(255, 191, 94, 0.24);
+      background: rgba(255, 191, 94, 0.1);
+      color: #ffdc9c;
+    }
+
+    .button.danger {
+      border-color: rgba(255, 96, 125, 0.24);
+      background: rgba(255, 96, 125, 0.1);
+      color: #ffadbb;
+    }
+
+    .button.ghost {
+      border-color: var(--line);
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .status-block {
+      display: grid;
+      gap: 15px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .round-status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid rgba(152, 112, 255, 0.3);
+      border-radius: 999px;
+      background: rgba(152, 112, 255, 0.1);
+      color: #d9cbff;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .round-status.locked {
+      border-color: rgba(255, 191, 94, 0.3);
+      background: rgba(255, 191, 94, 0.1);
+      color: #ffdb9b;
+    }
+
+    .round-status.revealed {
+      border-color: rgba(61, 209, 138, 0.3);
+      background: rgba(61, 209, 138, 0.1);
+      color: #aef0d0;
+    }
+
+    .round-status.idle {
+      border-color: var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+    }
+
+    .current-question {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.3;
+      font-weight: 850;
+      overflow-wrap: anywhere;
+    }
+
+    .live-options {
+      display: grid;
+      gap: 8px;
+    }
+
+    .live-option {
+      position: relative;
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 9px;
+      min-height: 45px;
+      padding: 7px 10px 7px 7px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.035);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .live-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      z-index: -1;
+      background: linear-gradient(90deg, rgba(91, 141, 255, 0.24), rgba(152, 112, 255, 0.12));
+      transition: width 300ms ease;
+    }
+
+    .live-option.correct {
+      border-color: rgba(61, 209, 138, 0.55);
+    }
+
+    .live-option.correct .live-fill {
+      background: linear-gradient(90deg, rgba(61, 209, 138, 0.28), rgba(61, 209, 138, 0.08));
+    }
+
+    .live-option.adjacent {
+      border-color: rgba(255, 191, 94, 0.52);
+    }
+
+    .live-option.adjacent .live-fill {
+      background: linear-gradient(90deg, rgba(255, 191, 94, 0.25), rgba(255, 191, 94, 0.07));
+    }
+
+    .live-index {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 31px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.22);
+      color: #d9ccff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .live-text {
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: 750;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .live-count {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      padding: 25px 15px;
+      color: var(--muted);
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .reveal-box {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 138px 158px auto;
+      gap: 9px;
+      align-items: end;
+      padding-top: 4px;
+    }
+
+    .scoring-mode-field,
+    .manual-partial-picker {
+      grid-column: 1 / -1;
+    }
+
+    .scoring-mode-field {
+      margin-bottom: 2px;
+    }
+
+    .mode-switch,
+    .partial-choice-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .mode-option,
+    .partial-choice {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 39px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.035);
+      color: #d9dcef;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .mode-option:has(input:checked),
+    .partial-choice:has(input:checked) {
+      border-color: rgba(255, 191, 94, 0.55);
+      background: rgba(255, 191, 94, 0.1);
+      color: #ffe1aa;
+    }
+
+    .mode-option input,
+    .partial-choice input {
+      width: 17px;
+      min-height: 17px;
+      height: 17px;
+      margin: 0;
+      padding: 0;
+      accent-color: var(--yellow);
+      box-shadow: none;
+    }
+
+    .partial-choice:has(input:disabled) {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .manual-partial-picker {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid rgba(255, 191, 94, 0.2);
+      border-radius: 11px;
+      background: rgba(255, 191, 94, 0.045);
+    }
+
+    .manual-partial-picker[hidden] {
+      display: none;
+    }
+
+    .scoring-preview {
+      grid-column: 1 / -1;
+      min-height: 18px;
+      margin: -4px 0 0;
+      color: #d8ccff;
+    }
+
+    .import-preview {
+      display: grid;
+      gap: 11px;
+      margin-top: 14px;
+      padding: 13px;
+      border: 1px solid rgba(61, 209, 138, 0.25);
+      border-radius: 11px;
+      background: rgba(61, 209, 138, 0.055);
+    }
+
+    .import-preview[hidden] {
+      display: none;
+    }
+
+    .import-summary {
+      margin: 0;
+      color: #dff8ed;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .import-note {
+      margin: -3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .table-wrap {
+      max-height: 465px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #161b28;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    td:last-child,
+    th:last-child {
+      text-align: right;
+    }
+
+    .rank-number {
+      color: var(--muted);
+      font-weight: 850;
+    }
+
+    .score-name {
+      max-width: 190px;
+      overflow: hidden;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .score-points {
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .score-edit {
+      padding: 4px 7px;
+      border-radius: 7px;
+      background: rgba(152, 112, 255, 0.1);
+      color: #cfbeff;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    details {
+      border-top: 1px solid var(--line);
+    }
+
+    summary {
+      padding: 14px 20px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .settings-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 9px;
+      padding: 0 20px 18px;
+    }
+
+    .toast-area {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 10;
+      display: grid;
+      gap: 9px;
+      width: min(390px, calc(100vw - 44px));
+    }
+
+    .toast {
+      padding: 12px 14px;
+      border: 1px solid rgba(152, 112, 255, 0.3);
+      border-radius: 12px;
+      background: rgba(23, 28, 42, 0.98);
+      box-shadow: var(--shadow);
+      color: #e9e5ff;
+      font-size: 13px;
+      line-height: 1.45;
+      animation: toast-in 200ms ease both;
+    }
+
+    .toast.error {
+      border-color: rgba(255, 96, 125, 0.45);
+      color: #ffc0cc;
+    }
+
+    .toast.success {
+      border-color: rgba(61, 209, 138, 0.4);
+      color: #baf3d7;
+    }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1000px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (min-width: 651px) and (max-width: 1250px) {
+      .reveal-box {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 650px) {
+      .page {
+        width: min(100% - 22px, 1480px);
+        padding-top: 17px;
+      }
+
+      .header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .security-card {
+        grid-template-columns: 1fr;
+      }
+
+      .security-card .button {
+        width: 100%;
+      }
+
+      .form-row,
+      .reveal-box {
+        grid-template-columns: 1fr;
+      }
+
+      .template-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .template-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .template-row select {
+        grid-column: 1 / -1;
+      }
+
+      .template-create-row input {
+        grid-column: 1 / -1;
+      }
+
+      .template-create-row .button {
+        grid-column: 1 / -1;
+      }
+
+      .card-body {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="title-wrap">
+        <div class="logo" aria-hidden="true">?</div>
+        <div>
+          <h1>Panel Quizu</h1>
+          <p class="subtitle">v1.3.0</p>
+        </div>
+      </div>
+      <div id="connection" class="connection">
+        <span class="connection-dot"></span>
+        <span id="connection-label">Wpisz hasło WebSocket</span>
+      </div>
+    </header>
+
+    <section class="security-card" aria-label="Bezpieczne połączenie">
+      <label class="security-field" for="ws-password">
+        <span class="field-label">Hasło WebSocket Streamer.bot</span>
+        <input
+          id="ws-password"
+          type="password"
+          minlength="12"
+          maxlength="256"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="To samo silne hasło co w WebSocket Server">
+      </label>
+      <button id="secure-connect-button" class="button primary" type="button">Połącz bezpiecznie</button>
+      <button id="copy-overlay-url" class="button ghost" type="button" disabled>Skopiuj URL overlayu</button>
+      <p class="security-note">
+        Hasło pozostaje wyłącznie w pamięci tej karty. Nie jest zapisywane w szkicu,
+        szablonach, rankingu ani kodzie C#.
+      </p>
+    </section>
+
+    <main class="grid">
+      <div class="stack">
+        <section class="card">
+          <div class="card-head">
+            <h2 class="card-title">Nowe pytanie</h2>
+            <span class="card-kicker">2–12 odpowiedzi</span>
+          </div>
+          <div class="card-body">
+            <div class="template-box">
+              <div class="template-heading">
+                <span class="field-label">Szablony pytań</span>
+                <span id="template-summary" class="hint template-summary">Brak zapisanych szablonów</span>
+              </div>
+              <div class="template-row">
+                <select id="template-select" aria-label="Zapisane szablony pytań">
+                  <option value="">- Wybierz zapisany szablon -</option>
+                </select>
+                <button id="load-template" class="button ghost" type="button" disabled>Wczytaj</button>
+                <button id="overwrite-template" class="button ghost" type="button" disabled>Nadpisz</button>
+                <button id="delete-template" class="button danger" type="button" disabled>Usuń</button>
+              </div>
+              <div class="template-row template-create-row">
+                <input id="template-name" maxlength="80" placeholder="Nazwa nowego szablonu, np. Wiedza ogólna">
+                <button id="save-template" class="button primary" type="button">+ Zapisz jako nowy</button>
+              </div>
+              <span class="hint">
+                Szablon zapisuje pytanie, odpowiedzi, czas oraz ustawienia punktów. Wszystko pozostaje w tej przeglądarce.
+              </span>
+            </div>
+
+            <div class="field">
+              <label for="question-input">Treść pytania</label>
+              <textarea id="question-input" maxlength="500" placeholder="Np. Który killer pojawił się w DBD jako pierwszy?"></textarea>
+            </div>
+
+            <div class="field">
+              <div class="field-label">Odpowiedzi i komendy widzów</div>
+              <div id="answers-editor" class="answers-editor"></div>
+              <div class="button-row">
+                <button id="add-answer" class="button ghost" type="button">+ Dodaj odpowiedź</button>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="field">
+                <label for="duration-input">Czas głosowania (sekundy)</label>
+                <input id="duration-input" type="number" min="0" max="3600" step="5" value="60">
+                <span class="hint">Wpisz 0, jeżeli chcesz zamykać głosowanie wyłącznie ręcznie.</span>
+              </div>
+              <div class="field">
+                <label>Głos widza</label>
+                <input value="Można zmienić aż do zamknięcia" disabled>
+                <span class="hint">Liczy się ostatnia poprawna komenda !1, !2, !3 itd.</span>
+              </div>
+            </div>
+
+            <div class="button-row">
+              <button id="start-button" class="button primary" type="button">Rozpocznij głosowanie</button>
+              <button id="save-draft" class="button ghost" type="button">Zapisz szkic</button>
+            </div>
+            <p class="hint" style="margin:10px 0 0">
+              Szkic roboczy zapisuje się też automatycznie i sam wraca po ponownym otwarciu panelu.
+              Do przechowywania kilku gotowych pytań użyj szablonów powyżej.
+            </p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2 class="card-title">Bieżąca runda</h2>
+            <span id="total-votes" class="card-kicker">0 głosów</span>
+          </div>
+          <div class="card-body">
+            <div id="round-empty" class="empty-state">
+              Nie ma aktywnego pytania. Utwórz je powyżej - overlay pojawi się automatycznie.
+            </div>
+
+            <div id="round-content" class="status-block" hidden>
+              <div class="status-row">
+                <span id="round-status" class="round-status idle">Brak rundy</span>
+                <span id="round-timer" class="hint"></span>
+              </div>
+              <h3 id="current-question" class="current-question"></h3>
+              <div id="live-options" class="live-options"></div>
+
+              <div class="button-row">
+                <button id="lock-button" class="button warning" type="button">Zamknij głosowanie</button>
+                <button id="show-button" class="button ghost" type="button">Pokaż overlay</button>
+                <button id="hide-button" class="button ghost" type="button">Ukryj overlay</button>
+                <button id="cancel-button" class="button danger" type="button">Anuluj rundę</button>
+              </div>
+
+              <div class="reveal-box">
+                <div class="field scoring-mode-field">
+                  <span class="field-label">Sposób wyboru odpowiedzi za mniej punktów</span>
+                  <div class="mode-switch" role="radiogroup" aria-label="Sposób punktowania częściowego">
+                    <label class="mode-option">
+                      <input type="radio" name="scoring-mode" value="adjacent" checked>
+                      <span>Automatycznie obok poprawnej</span>
+                    </label>
+                    <label class="mode-option">
+                      <input type="radio" name="scoring-mode" value="manual">
+                      <span>Wybieram ręcznie</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="correct-select">Poprawna odpowiedź</label>
+                  <select id="correct-select"></select>
+                </div>
+                <div class="field">
+                  <label for="points-input">Za poprawną</label>
+                  <input id="points-input" type="number" min="0" max="1000" step="1" value="3">
+                </div>
+                <div class="field">
+                  <label for="adjacent-points-input">Za odpowiedź częściową</label>
+                  <input id="adjacent-points-input" type="number" min="0" max="1000" step="1" value="1">
+                </div>
+                <button id="reveal-button" class="button success" type="button">Ujawnij i przyznaj</button>
+                <div id="manual-partial-picker" class="manual-partial-picker" hidden>
+                  <span class="field-label">Zaznacz odpowiedzi za mniej punktów</span>
+                  <div id="manual-partial-options" class="partial-choice-list"></div>
+                  <span class="hint">Możesz wybrać jedną, dwie albo więcej. Poprawna odpowiedź jest wyłączona.</span>
+                </div>
+                <p id="scoring-preview" class="hint scoring-preview">
+                  Wybierz tryb punktowania. Wpisz 0 punktów częściowych, aby je wyłączyć.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="card">
+          <div class="card-head">
+            <h2 class="card-title">Ranking punktów</h2>
+            <span id="participants-count" class="card-kicker">0 osób</span>
+          </div>
+          <div id="score-empty" class="empty-state">Nikt nie zdobył jeszcze punktów.</div>
+          <div id="score-table-wrap" class="table-wrap" hidden>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Widz</th>
+                  <th>Poprawne</th>
+                  <th>Punkty</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="score-body"></tbody>
+            </table>
+          </div>
+          <div class="card-body">
+            <div class="button-row" style="margin-top: 0">
+              <button id="refresh-scores" class="button ghost" type="button">Odśwież</button>
+              <button id="export-scores" class="button ghost" type="button">Eksport CSV</button>
+              <button id="import-scores" class="button success" type="button">Import CSV</button>
+              <button id="restore-import-backup" class="button warning" type="button">Cofnij ostatni import</button>
+              <button id="reset-scores" class="button danger" type="button">Wyzeruj ranking</button>
+            </div>
+            <input id="import-scores-file" type="file" accept=".csv,text/csv" hidden>
+            <div id="import-preview" class="import-preview" hidden>
+              <p id="import-summary" class="import-summary"></p>
+              <div class="mode-switch" aria-label="Tryb importu rankingu">
+                <label class="mode-option">
+                  <input type="radio" name="import-mode" value="replace" checked>
+                  <span>Zastąp cały ranking</span>
+                </label>
+                <label class="mode-option">
+                  <input type="radio" name="import-mode" value="merge">
+                  <span>Połącz z obecnym</span>
+                </label>
+              </div>
+              <p id="import-note" class="import-note"></p>
+              <div class="button-row" style="margin-top: 0">
+                <button id="confirm-import" class="button success" type="button">Zaimportuj ranking</button>
+                <button id="cancel-import" class="button ghost" type="button">Anuluj</button>
+              </div>
+            </div>
+            <p class="hint">Widz sprawdza swój wynik komendą <strong>!punkty</strong>, a TOP 5 komendą <strong>!ranking</strong>.</p>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2 class="card-title">Szybka pomoc</h2>
+            <span class="card-kicker">Tylko lokalnie</span>
+          </div>
+          <div class="card-body">
+            <p class="hint" style="margin:0 0 10px">
+              Panel komunikuje się bezpośrednio z aplikacją Streamer.bot na Twoim komputerze.
+              Nie wysyła pytań, głosów ani rankingu do żadnej zewnętrznej usługi.
+            </p>
+            <p class="hint" style="margin:0">
+              Moderator lub broadcaster może też sterować z czatu komendą
+              administracyjną ustawioną w <strong>QuizEngine.cs</strong>.
+              Domyślnie jest to <strong>!quiz</strong>, a <strong>!quiz pomoc</strong>
+              pokazuje dostępne polecenia.
+            </p>
+          </div>
+          <details>
+            <summary>Ustawienia połączenia</summary>
+            <div class="settings-body">
+              <input
+                id="ws-url"
+                value="ws://127.0.0.1:8080/"
+                maxlength="512"
+                spellcheck="false"
+                aria-label="Adres WebSocket">
+              <button id="reconnect-button" class="button ghost" type="button">Połącz ponownie</button>
+            </div>
+          </details>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-area" class="toast-area" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const ACTION_NAME = 'QUIZ - Silnik';
+      const DEFAULT_WS_URL = 'ws://127.0.0.1:8080/';
+      const STATE_VARIABLE = 'localQuiz_state_v1';
+      const SCORES_VARIABLE = 'localQuiz_scores_v1';
+      const DRAFT_STORAGE_KEY = 'localQuiz.draft';
+      const TEMPLATES_STORAGE_KEY = 'localQuiz.templates.v1';
+      const MAX_ANSWERS = 12;
+      const MIN_ANSWERS = 2;
+      const MAX_TEMPLATES = 100;
+      const MAX_IMPORT_FILE_BYTES = 8 * 1024 * 1024;
+      const MAX_IMPORTED_SCORES = 25000;
+      const MAX_SCORE_VALUE = 100000000;
+      const MAX_SOCKET_MESSAGE_LENGTH = 10 * 1024 * 1024;
+      const MIN_PASSWORD_LENGTH = 12;
+      const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost']);
+
+      const $ = id => document.getElementById(id);
+      const connectionEl = $('connection');
+      const connectionLabelEl = $('connection-label');
+      const passwordInput = $('ws-password');
+      const secureConnectButton = $('secure-connect-button');
+      const copyOverlayUrlButton = $('copy-overlay-url');
+      const questionInput = $('question-input');
+      const answersEditor = $('answers-editor');
+      const durationInput = $('duration-input');
+      const startButton = $('start-button');
+      const addAnswerButton = $('add-answer');
+      const templateSelect = $('template-select');
+      const templateNameInput = $('template-name');
+      const loadTemplateButton = $('load-template');
+      const overwriteTemplateButton = $('overwrite-template');
+      const deleteTemplateButton = $('delete-template');
+      const templateSummary = $('template-summary');
+      const wsUrlInput = $('ws-url');
+      const roundEmpty = $('round-empty');
+      const roundContent = $('round-content');
+      const roundStatus = $('round-status');
+      const roundTimer = $('round-timer');
+      const currentQuestion = $('current-question');
+      const liveOptions = $('live-options');
+      const totalVotes = $('total-votes');
+      const correctSelect = $('correct-select');
+      const pointsInput = $('points-input');
+      const adjacentPointsInput = $('adjacent-points-input');
+      const scoringModeInputs = [...document.querySelectorAll('input[name="scoring-mode"]')];
+      const manualPartialPicker = $('manual-partial-picker');
+      const manualPartialOptions = $('manual-partial-options');
+      const scoringPreview = $('scoring-preview');
+      const scoreEmpty = $('score-empty');
+      const scoreTableWrap = $('score-table-wrap');
+      const scoreBody = $('score-body');
+      const participantsCount = $('participants-count');
+      const importScoresFile = $('import-scores-file');
+      const importPreview = $('import-preview');
+      const importSummary = $('import-summary');
+      const importNote = $('import-note');
+      const importModeInputs = [...document.querySelectorAll('input[name="import-mode"]')];
+      const toastArea = $('toast-area');
+
+      let socket = null;
+      let reconnectTimer = null;
+      let requestCounter = 0;
+      let connectionAttempt = 0;
+      let authRequestId = '';
+      let isAuthenticated = false;
+      let reconnectEnabled = false;
+      let currentPassword = '';
+      let currentWsUrl = DEFAULT_WS_URL;
+      let currentState = null;
+      let allScores = [];
+      let lastRevision = -1;
+      let lastScoresRound = '';
+      let autoLockRound = '';
+      let isConnected = false;
+      let lastFallbackSyncAt = 0;
+      let manualPartialSelection = new Set();
+      let templates = [];
+      let pendingScoreImport = null;
+
+      function isTrustedPageOrigin() {
+        return location.protocol === 'http:' &&
+          LOOPBACK_HOSTS.has(location.hostname.toLowerCase());
+      }
+
+      function normalizeWebSocketUrl(rawUrl) {
+        const candidate = String(rawUrl || '').trim();
+        if (!candidate || candidate.length > 512) {
+          throw new Error('Nieprawidłowy adres WebSocket.');
+        }
+
+        let url;
+        try {
+          url = new URL(candidate);
+        } catch {
+          throw new Error('Nieprawidłowy adres WebSocket.');
+        }
+
+        if (url.protocol !== 'ws:') {
+          throw new Error('Dozwolone jest wyłącznie lokalne połączenie ws://.');
+        }
+        if (!LOOPBACK_HOSTS.has(url.hostname.toLowerCase())) {
+          throw new Error('WebSocket musi używać 127.0.0.1 albo localhost.');
+        }
+        if (url.username || url.password || url.search || url.hash) {
+          throw new Error('Adres WebSocket nie może zawierać loginu ani parametrów.');
+        }
+        if (url.port) {
+          const port = Number(url.port);
+          if (!Number.isInteger(port) || port < 1 || port > 65535) {
+            throw new Error('Nieprawidłowy port WebSocket.');
+          }
+        }
+        return url.href;
+      }
+
+      function getWsUrl() {
+        const fromQuery = new URLSearchParams(location.search).get('ws');
+        const candidate =
+          fromQuery || localStorage.getItem('localQuiz.wsUrl') || DEFAULT_WS_URL;
+        try {
+          return normalizeWebSocketUrl(candidate);
+        } catch {
+          return DEFAULT_WS_URL;
+        }
+      }
+
+      function bytesToBase64(bytes) {
+        let binary = '';
+        for (let offset = 0; offset < bytes.length; offset += 8192) {
+          const chunk = bytes.subarray(offset, Math.min(offset + 8192, bytes.length));
+          binary += String.fromCharCode(...chunk);
+        }
+        return btoa(binary);
+      }
+
+      async function sha256Base64(value) {
+        if (!window.crypto?.subtle || !window.TextEncoder) {
+          throw new Error(
+            'Ta przeglądarka nie obsługuje SHA-256. Otwórz panel przez lokalny HTTP Server.'
+          );
+        }
+        const bytes = new TextEncoder().encode(String(value));
+        const digest = await window.crypto.subtle.digest('SHA-256', bytes);
+        return bytesToBase64(new Uint8Array(digest));
+      }
+
+      async function buildAuthentication(password, salt, challenge) {
+        if (!salt || !challenge) {
+          throw new Error('Streamer.bot nie przesłał danych uwierzytelniania.');
+        }
+        const secret = await sha256Base64(String(password) + String(salt));
+        return sha256Base64(secret + String(challenge));
+      }
+
+      function parseSocketMessage(rawMessage) {
+        if (typeof rawMessage !== 'string' ||
+            rawMessage.length > MAX_SOCKET_MESSAGE_LENGTH) {
+          return null;
+        }
+        try {
+          return JSON.parse(rawMessage);
+        } catch {
+          return null;
+        }
+      }
+
+      function verifyEnforce(rawUrl, timeoutMs = 3500) {
+        return new Promise(resolve => {
+          let probeSocket = null;
+          let probeSent = false;
+          let settled = false;
+          const probeId =
+            `quiz-enforce-check-${Date.now()}-${Math.random()}`;
+
+          const finish = result => {
+            if (settled) {
+              return;
+            }
+            settled = true;
+            clearTimeout(timer);
+            if (probeSocket && probeSocket.readyState < WebSocket.CLOSING) {
+              probeSocket.close();
+            }
+            resolve(result);
+          };
+
+          const timer = setTimeout(() => finish(null), timeoutMs);
+          try {
+            probeSocket = new WebSocket(rawUrl);
+          } catch {
+            finish(null);
+            return;
+          }
+
+          probeSocket.addEventListener('message', event => {
+            const payload = parseSocketMessage(event.data);
+            if (!payload) {
+              return;
+            }
+            if (payload.request === 'Hello') {
+              if (!payload.authentication?.salt ||
+                  !payload.authentication?.challenge) {
+                finish(false);
+                return;
+              }
+              probeSent = true;
+              probeSocket.send(JSON.stringify({
+                request: 'GetInfo',
+                id: probeId
+              }));
+              return;
+            }
+            if (payload.id === probeId) {
+              finish(payload.status !== 'ok');
+            }
+          });
+          probeSocket.addEventListener('close', () => {
+            if (!settled) {
+              finish(probeSent ? true : null);
+            }
+          });
+          probeSocket.addEventListener('error', () => {
+            if (!settled) {
+              finish(null);
+            }
+          });
+        });
+      }
+
+      function stopSocket(activeSocket) {
+        reconnectEnabled = false;
+        if (socket === activeSocket) {
+          socket = null;
+        }
+        if (activeSocket && activeSocket.readyState < WebSocket.CLOSING) {
+          activeSocket.close();
+        }
+      }
+
+      async function handleHello(payload, activeSocket, attempt) {
+        if (!payload.authentication?.salt ||
+            !payload.authentication?.challenge) {
+          setConnection(false, 'Włącz Authentication i Enforce');
+          showToast(
+            'W WebSocket Server włącz Authentication, Enforce i ustaw hasło.',
+            'error'
+          );
+          stopSocket(activeSocket);
+          return;
+        }
+
+        try {
+          const authentication = await buildAuthentication(
+            currentPassword,
+            payload.authentication.salt,
+            payload.authentication.challenge
+          );
+          if (socket !== activeSocket || attempt !== connectionAttempt) {
+            return;
+          }
+          authRequestId =
+            `quiz-panel-auth-${Date.now()}-${++requestCounter}`;
+          activeSocket.send(JSON.stringify({
+            request: 'Authenticate',
+            id: authRequestId,
+            authentication
+          }));
+          setConnection(false, 'Sprawdzanie hasła…');
+        } catch (error) {
+          setConnection(false, error?.message || 'Błąd uwierzytelniania');
+          stopSocket(activeSocket);
+        }
+      }
+
+      function connect() {
+        const attempt = ++connectionAttempt;
+        clearTimeout(reconnectTimer);
+        if (socket) {
+          const previousSocket = socket;
+          socket = null;
+          previousSocket.close();
+        }
+
+        isAuthenticated = false;
+        setConnection(false, 'Przygotowanie bezpiecznego połączenia…');
+
+        if (!isTrustedPageOrigin()) {
+          reconnectEnabled = false;
+          setConnection(false, 'Otwórz panel z 127.0.0.1');
+          showToast(
+            'Panel działa tylko przez lokalny HTTP Server: http://127.0.0.1/…',
+            'error'
+          );
+          return;
+        }
+
+        try {
+          currentWsUrl = normalizeWebSocketUrl(
+            wsUrlInput.value.trim() || DEFAULT_WS_URL
+          );
+        } catch (error) {
+          reconnectEnabled = false;
+          setConnection(false, error?.message || 'Nieprawidłowy adres WebSocket');
+          return;
+        }
+
+        currentPassword = passwordInput.value;
+        if (currentPassword.length < MIN_PASSWORD_LENGTH ||
+            currentPassword.length > 256) {
+          reconnectEnabled = false;
+          setConnection(false, `Hasło musi mieć co najmniej ${MIN_PASSWORD_LENGTH} znaków`);
+          passwordInput.focus();
+          return;
+        }
+
+        localStorage.setItem('localQuiz.wsUrl', currentWsUrl);
+        reconnectEnabled = true;
+        setConnection(false, 'Łączenie ze Streamer.bot…');
+
+        let activeSocket;
+        try {
+          activeSocket = new WebSocket(currentWsUrl);
+          socket = activeSocket;
+        } catch {
+          reconnectEnabled = false;
+          setConnection(false, 'Nie udało się otworzyć WebSocketu');
+          return;
+        }
+
+        activeSocket.addEventListener('open', () => {
+          if (socket === activeSocket && attempt === connectionAttempt) {
+            lastRevision = -1;
+            setConnection(false, 'Oczekiwanie na uwierzytelnienie…');
+          }
+        });
+
+        activeSocket.addEventListener('message', event => {
+          if (socket === activeSocket && attempt === connectionAttempt) {
+            handleSocketMessage(event.data, activeSocket, attempt);
+          }
+        });
+
+        activeSocket.addEventListener('close', () => {
+          if (socket !== activeSocket) {
+            return;
+          }
+          socket = null;
+          isAuthenticated = false;
+          setConnection(false, 'Rozłączono - ponawiam połączenie…');
+          if (reconnectEnabled && currentPassword) {
+            reconnectTimer = setTimeout(connect, 2500);
+          }
+        });
+
+        activeSocket.addEventListener('error', () => {
+          if (socket === activeSocket) {
+            setConnection(false, 'Brak połączenia ze Streamer.bot');
+          }
+        });
+      }
+
+      function setConnection(connected, label) {
+        isConnected = connected;
+        connectionEl.classList.toggle('connected', connected);
+        connectionLabelEl.textContent = label;
+        copyOverlayUrlButton.disabled = !connected;
+        updateStartButton();
+      }
+
+      function doAction(args, notifyOnDisconnect = true, refreshAfter = true) {
+        if (!isAuthenticated ||
+            !socket ||
+            socket.readyState !== WebSocket.OPEN) {
+          if (notifyOnDisconnect) {
+            showToast('Najpierw połącz panel poprawnym hasłem.', 'error');
+          }
+          return false;
+        }
+
+        const normalizedArgs = {};
+        for (const [key, value] of Object.entries(args)) {
+          normalizedArgs[key] = String(value);
+        }
+
+        socket.send(JSON.stringify({
+          request: 'DoAction',
+          action: { name: ACTION_NAME },
+          args: normalizedArgs,
+          id: `quiz-panel-action-${Date.now()}-${++requestCounter}`
+        }));
+        if (refreshAfter) {
+          window.setTimeout(requestGlobals, 120);
+          window.setTimeout(requestGlobals, 450);
+          window.setTimeout(
+            () => doAction({ quizOperation: 'sync' }, false, false),
+            220
+          );
+        }
+        return true;
+      }
+
+      function parseJson(value) {
+        if (value && typeof value === 'object') {
+          return value;
+        }
+        if (typeof value !== 'string') {
+          return null;
+        }
+        try {
+          return JSON.parse(value);
+        } catch {
+          return null;
+        }
+      }
+
+     
+      
+      function walkMessageObjects(value, visitor, depth = 0, seen = new Set()) {
+        if (depth > 7) {
+          return;
+        }
+
+        let current = value;
+        if (typeof current === 'string') {
+          current = parseJson(current);
+        }
+        if (!current || typeof current !== 'object' || seen.has(current)) {
+          return;
+        }
+
+        seen.add(current);
+        visitor(current);
+
+        for (const child of Object.values(current)) {
+          if (child && (typeof child === 'object' || typeof child === 'string')) {
+            walkMessageObjects(child, visitor, depth + 1, seen);
+          }
+        }
+      }
+
+      async function handleSocketMessage(rawMessage, activeSocket, attempt) {
+        const direct = parseSocketMessage(rawMessage);
+        if (!direct) {
+          return;
+        }
+
+        if (direct.request === 'Hello') {
+          await handleHello(direct, activeSocket, attempt);
+          return;
+        }
+
+        if (direct.id === authRequestId) {
+          if (direct.status !== 'ok') {
+            setConnection(false, 'Błędne hasło WebSocket');
+            showToast('Streamer.bot odrzucił hasło WebSocket.', 'error');
+            stopSocket(activeSocket);
+            return;
+          }
+
+          setConnection(false, 'Hasło poprawne — sprawdzanie Enforce…');
+          const enforceEnabled = await verifyEnforce(currentWsUrl);
+          if (socket !== activeSocket || attempt !== connectionAttempt) {
+            return;
+          }
+          if (enforceEnabled !== true) {
+            const message = enforceEnabled === false
+              ? 'Authentication działa, ale Enforce jest wyłączone'
+              : 'Nie udało się potwierdzić ustawienia Enforce';
+            setConnection(false, message);
+            showToast(
+              message + '. Sprawdź WebSocket Server i połącz panel ponownie.',
+              'error'
+            );
+            stopSocket(activeSocket);
+            return;
+          }
+
+          isAuthenticated = true;
+          setConnection(true, 'Bezpiecznie połączono ze Streamer.bot');
+          doAction({ quizOperation: 'sync' }, false, false);
+          requestGlobals();
+          return;
+        }
+
+        if (!isAuthenticated) {
+          return;
+        }
+
+        walkMessageObjects(direct, payload => {
+          if (payload.type === 'quiz-state') {
+            applyState(payload);
+          } else if (payload.type === 'quiz-scores') {
+            allScores = Array.isArray(payload.scores) ? payload.scores : [];
+            renderScores();
+          } else if (payload.type === 'quiz-error') {
+            showToast(payload.message || 'Wystąpił błąd.', 'error');
+          } else if (payload.type === 'quiz-notice') {
+            showToast(payload.message || 'Gotowe.', 'success');
+          } else if (payload.status === 'ok' && payload.variable) {
+            handleGlobalResponse(payload);
+          } else if (payload.status === 'ok' && payload.variables) {
+            handleGlobalsResponse(payload);
+          }
+        });
+      }
+
+      function requestGlobal(variable, persisted, kind) {
+        if (!isAuthenticated ||
+            !socket ||
+            socket.readyState !== WebSocket.OPEN) {
+          return false;
+        }
+        socket.send(JSON.stringify({
+          request: 'GetGlobal',
+          variable,
+          persisted,
+          id: `quiz-panel-global-${kind}-${Date.now()}-${++requestCounter}`
+        }));
+        return true;
+      }
+
+      function requestGlobals() {
+        if (!isAuthenticated ||
+            !socket ||
+            socket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+        requestGlobal(STATE_VARIABLE, false, 'state');
+        requestGlobal(SCORES_VARIABLE, true, 'scores');
+
+       
+        const now = Date.now();
+        if (now - lastFallbackSyncAt >= 2500) {
+          lastFallbackSyncAt = now;
+          doAction({ quizOperation: 'sync' }, false, false);
+        }
+      }
+
+      function handleGlobalResponse(payload) {
+        const id = String(payload.id || '');
+        const variable = payload.variable || {};
+        const rawValue = variable.value;
+        const value = parseJson(rawValue);
+        if (!value) {
+          return;
+        }
+
+        if (id.includes('-global-state-') ||
+            variable.name === STATE_VARIABLE) {
+          applyState(normalizeStoredState(value));
+        } else if (id.includes('-global-scores-') ||
+                   variable.name === SCORES_VARIABLE) {
+          allScores = normalizeStoredScores(value);
+          renderScores();
+        }
+      }
+
+      function handleGlobalsResponse(payload) {
+        const rawVariables = payload.variables || {};
+        const variables = Array.isArray(rawVariables)
+          ? rawVariables
+          : Object.values(rawVariables);
+
+        for (const variable of variables) {
+          if (!variable || !variable.name) {
+            continue;
+          }
+          handleGlobalResponse({
+            status: 'ok',
+            id: payload.id || '',
+            variable
+          });
+        }
+      }
+
+      function normalizeScoringMode(value) {
+        return String(value || '').toLowerCase() === 'manual'
+          ? 'manual'
+          : 'adjacent';
+      }
+
+      function normalizePartialIndices(value, optionCount, correctIndex) {
+        const source = Array.isArray(value) ? value : [];
+        return [...new Set(source
+          .map(Number)
+          .filter(index =>
+            Number.isInteger(index) &&
+            index >= 1 &&
+            index <= optionCount &&
+            index !== correctIndex))]
+          .sort((a, b) => a - b);
+      }
+
+      function normalizeStoredState(stored) {
+        if (stored.type === 'quiz-state') {
+          const normalized = { ...stored };
+          const options = Array.isArray(normalized.options) ? normalized.options : [];
+          const correctIndex = Number(normalized.correctIndex || 0);
+          normalized.scoringMode = normalizeScoringMode(normalized.scoringMode);
+          normalized.partialIndices = normalizePartialIndices(
+            normalized.partialIndices,
+            options.length,
+            correctIndex);
+          if (normalized.status === 'revealed' &&
+              Number(normalized.pointsPerAdjacent || 0) > 0 &&
+              normalized.scoringMode === 'adjacent' &&
+              normalized.partialIndices.length === 0) {
+            normalized.partialIndices = options
+              .map(option => Number(option.index))
+              .filter(index => Math.abs(index - correctIndex) === 1);
+          }
+          return normalized;
+        }
+
+        const status = String(stored.Status ?? stored.status ?? 'idle').toLowerCase();
+        const storedOptions = Array.isArray(stored.Options)
+          ? stored.Options
+          : Array.isArray(stored.options)
+            ? stored.options
+            : [];
+        const votes = stored.Votes ?? stored.votes ?? {};
+        const counts = new Array(storedOptions.length).fill(0);
+
+        for (const choice of Object.values(votes)) {
+          const index = Number(choice);
+          if (Number.isInteger(index) && index >= 1 && index <= counts.length) {
+            counts[index - 1]++;
+          }
+        }
+
+        const correctIndex = status === 'revealed'
+          ? Number(stored.CorrectIndex ?? stored.correctIndex ?? 0)
+          : 0;
+        const scoringMode = normalizeScoringMode(
+          stored.ScoringMode ?? stored.scoringMode);
+        let partialIndices = normalizePartialIndices(
+          stored.PartialIndices ?? stored.partialIndices,
+          storedOptions.length,
+          correctIndex);
+        if (status === 'revealed' &&
+            Number(stored.PointsPerAdjacent ?? stored.pointsPerAdjacent ?? 0) > 0 &&
+            scoringMode === 'adjacent' &&
+            partialIndices.length === 0) {
+          partialIndices = storedOptions
+            .map((_, index) => index + 1)
+            .filter(index => Math.abs(index - correctIndex) === 1);
+        }
+
+        return {
+          type: 'quiz-state',
+          revision: Number(stored.Revision ?? stored.revision ?? 0),
+          status,
+          visible: Boolean(stored.Visible ?? stored.visible),
+          question: String(stored.Question ?? stored.question ?? ''),
+          options: storedOptions.map((option, index) => ({
+            index: index + 1,
+            text: String(option.Text ?? option.text ?? ''),
+            count: counts[index]
+          })),
+          totalVotes: Object.keys(votes).length,
+          correctIndex,
+          pointsPerCorrect: Number(stored.PointsPerCorrect ?? stored.pointsPerCorrect ?? 1),
+          pointsPerAdjacent: Number(stored.PointsPerAdjacent ?? stored.pointsPerAdjacent ?? 0),
+          scoringMode,
+          partialIndices,
+          startedAt: Number(stored.StartedAt ?? stored.startedAt ?? 0),
+          closesAt: Number(stored.ClosesAt ?? stored.closesAt ?? 0),
+          roundId: String(stored.RoundId ?? stored.roundId ?? '')
+        };
+      }
+
+      function normalizeStoredScores(stored) {
+        const entries = Array.isArray(stored)
+          ? stored.map(entry => ({ entry, storageKey: '' }))
+          : Object.entries(stored || {})
+              .map(([storageKey, entry]) => ({ entry, storageKey }));
+        return entries
+          .filter(item => item.entry)
+          .map(({ entry, storageKey }) => ({
+            userId: String(entry.UserId ?? entry.userId ?? storageKey ?? ''),
+            userName: String(entry.UserName ?? entry.userName ?? 'Widz'),
+            points: Number(entry.Points ?? entry.points ?? 0),
+            correct: Number(entry.CorrectAnswers ?? entry.correct ?? 0),
+            answered: Number(entry.AnsweredQuestions ?? entry.answered ?? 0),
+            lastUpdatedAt: Number(entry.LastUpdatedAt ?? entry.lastUpdatedAt ?? 0)
+          }))
+          .sort((a, b) =>
+            b.points - a.points ||
+            b.correct - a.correct ||
+            a.answered - b.answered ||
+            a.userName.localeCompare(b.userName, 'pl', { sensitivity: 'base' }))
+          .map((entry, index) => ({ ...entry, position: index + 1 }));
+      }
+
+      function updateStartButton() {
+        const hasRound = currentState && currentState.status !== 'idle';
+        startButton.disabled = !isConnected || Boolean(hasRound);
+        startButton.textContent = hasRound
+          ? 'Najpierw zakończ bieżącą rundę'
+          : 'Rozpocznij głosowanie';
+      }
+
+      function addAnswer(value = '') {
+        const count = answersEditor.querySelectorAll('.answer-row').length;
+        if (count >= MAX_ANSWERS) {
+          showToast(`Maksymalnie ${MAX_ANSWERS} odpowiedzi.`, 'error');
+          return;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'answer-row';
+
+        const number = document.createElement('span');
+        number.className = 'answer-number';
+
+        const input = document.createElement('input');
+        input.className = 'answer-input';
+        input.maxLength = 240;
+        input.placeholder = 'Treść odpowiedzi';
+        input.value = value;
+        input.addEventListener('input', persistDraft);
+
+        const remove = document.createElement('button');
+        remove.className = 'remove-answer';
+        remove.type = 'button';
+        remove.title = 'Usuń odpowiedź';
+        remove.textContent = '×';
+        remove.addEventListener('click', () => {
+          if (answersEditor.querySelectorAll('.answer-row').length <= MIN_ANSWERS) {
+            showToast('Quiz musi mieć co najmniej 2 odpowiedzi.', 'error');
+            return;
+          }
+          row.remove();
+          renumberAnswers();
+          persistDraft();
+        });
+
+        row.append(number, input, remove);
+        answersEditor.append(row);
+        renumberAnswers();
+        addAnswerButton.disabled = answersEditor.querySelectorAll('.answer-row').length >= MAX_ANSWERS;
+      }
+
+      function renumberAnswers() {
+        [...answersEditor.querySelectorAll('.answer-row')].forEach((row, index) => {
+          row.querySelector('.answer-number').textContent = `!${index + 1}`;
+        });
+        addAnswerButton.disabled = answersEditor.querySelectorAll('.answer-row').length >= MAX_ANSWERS;
+      }
+
+      function collectAnswers() {
+        return [...answersEditor.querySelectorAll('.answer-input')]
+          .map(input => input.value.trim());
+      }
+
+      function startQuiz() {
+        const question = questionInput.value.trim();
+        const answers = collectAnswers();
+        const nonEmptyAnswers = answers.filter(Boolean);
+        const duration = Math.max(0, Math.min(3600, Number(durationInput.value || 0)));
+
+        if (question.length < 2) {
+          showToast('Wpisz treść pytania.', 'error');
+          questionInput.focus();
+          return;
+        }
+
+        if (nonEmptyAnswers.length < MIN_ANSWERS) {
+          showToast('Uzupełnij co najmniej 2 odpowiedzi.', 'error');
+          return;
+        }
+
+        if (nonEmptyAnswers.length !== answers.length) {
+          showToast('Usuń puste pola odpowiedzi albo je uzupełnij.', 'error');
+          return;
+        }
+
+        if (doAction({
+          quizOperation: 'start',
+          question,
+          answersJson: JSON.stringify(answers),
+          durationSeconds: Math.round(duration)
+        })) {
+          persistDraft();
+        }
+      }
+
+      function applyState(state) {
+        const revision = Number(state.revision || 0);
+        if (revision < lastRevision) {
+          return;
+        }
+        lastRevision = revision;
+        currentState = state;
+        renderRound();
+        updateStartButton();
+
+        if (state.status === 'revealed' && state.roundId && lastScoresRound !== state.roundId) {
+          lastScoresRound = state.roundId;
+          window.setTimeout(() => doAction({ quizOperation: 'getScores' }, false), 120);
+        }
+      }
+
+      function getScoringMode() {
+        const selected = scoringModeInputs.find(input => input.checked);
+        return normalizeScoringMode(selected ? selected.value : 'adjacent');
+      }
+
+      function setScoringMode(mode) {
+        const normalized = normalizeScoringMode(mode);
+        for (const input of scoringModeInputs) {
+          input.checked = input.value === normalized;
+        }
+      }
+
+      function getPartialIndicesForMode(correctIndex, optionCount) {
+        if (getScoringMode() === 'manual') {
+          return normalizePartialIndices(
+            [...manualPartialSelection],
+            optionCount,
+            correctIndex);
+        }
+
+        const indices = [];
+        if (correctIndex > 1) {
+          indices.push(correctIndex - 1);
+        }
+        if (correctIndex > 0 && correctIndex < optionCount) {
+          indices.push(correctIndex + 1);
+        }
+        return indices;
+      }
+
+      function isPartialAnswer(state, optionIndex) {
+        if (!state || state.status !== 'revealed' ||
+            Number(state.pointsPerAdjacent || 0) <= 0) {
+          return false;
+        }
+
+        const partialIndices = normalizePartialIndices(
+          state.partialIndices,
+          Array.isArray(state.options) ? state.options.length : 0,
+          Number(state.correctIndex || 0));
+        if (partialIndices.length > 0) {
+          return partialIndices.includes(Number(optionIndex));
+        }
+
+        return normalizeScoringMode(state.scoringMode) === 'adjacent' &&
+          Math.abs(Number(state.correctIndex) - Number(optionIndex)) === 1;
+      }
+
+      function renderManualPartialChoices(options, canReveal) {
+        const correctIndex = Number(correctSelect.value || 0);
+        const validIndices = new Set(options.map(option => Number(option.index)));
+        manualPartialSelection = new Set(
+          [...manualPartialSelection].filter(index =>
+            validIndices.has(index) && index !== correctIndex));
+
+        manualPartialPicker.hidden = getScoringMode() !== 'manual';
+        manualPartialOptions.replaceChildren();
+
+        for (const option of options) {
+          const optionIndex = Number(option.index);
+          const label = document.createElement('label');
+          label.className = 'partial-choice';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.value = String(optionIndex);
+          checkbox.checked = manualPartialSelection.has(optionIndex);
+          checkbox.disabled = !canReveal || optionIndex === correctIndex;
+          checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+              manualPartialSelection.add(optionIndex);
+            } else {
+              manualPartialSelection.delete(optionIndex);
+            }
+            persistDraft();
+            updateScoringPreview();
+          });
+
+          const text = document.createElement('span');
+          text.textContent = optionIndex === correctIndex
+            ? `!${optionIndex} - poprawna`
+            : `!${optionIndex} - ${option.text || ''}`;
+          label.append(checkbox, text);
+          manualPartialOptions.append(label);
+        }
+      }
+
+      function renderRound() {
+        if (!currentState || currentState.status === 'idle') {
+          roundEmpty.hidden = false;
+          roundContent.hidden = true;
+          totalVotes.textContent = '0 głosów';
+          updateStartButton();
+          return;
+        }
+
+        roundEmpty.hidden = true;
+        roundContent.hidden = false;
+        currentQuestion.textContent = currentState.question || 'Quiz';
+        totalVotes.textContent = `${Number(currentState.totalVotes || 0)} głosów`;
+
+        roundStatus.className = `round-status ${currentState.status}`;
+        roundStatus.textContent = {
+          open: 'Głosowanie trwa',
+          locked: 'Głosowanie zamknięte',
+          revealed: 'Wynik ujawniony'
+        }[currentState.status] || currentState.status;
+
+        const previousCorrectSelection = correctSelect.value;
+        const options = Array.isArray(currentState.options) ? currentState.options : [];
+        const total = Math.max(0, Number(currentState.totalVotes || 0));
+        liveOptions.replaceChildren();
+        correctSelect.replaceChildren();
+
+        for (const option of options) {
+          const count = Math.max(0, Number(option.count || 0));
+          const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+
+          const row = document.createElement('div');
+          row.className = 'live-option';
+          if (currentState.status === 'revealed' &&
+              Number(currentState.correctIndex) === Number(option.index)) {
+            row.classList.add('correct');
+          } else if (isPartialAnswer(currentState, option.index)) {
+            row.classList.add('adjacent');
+          }
+
+          const fill = document.createElement('span');
+          fill.className = 'live-fill';
+          fill.style.width = `${percentage}%`;
+
+          const index = document.createElement('span');
+          index.className = 'live-index';
+          index.textContent = `!${option.index}`;
+
+          const text = document.createElement('span');
+          text.className = 'live-text';
+          text.textContent = option.text || '';
+
+          const countEl = document.createElement('span');
+          countEl.className = 'live-count';
+          let pointsForOption = 0;
+          if (currentState.status === 'revealed') {
+            if (Number(currentState.correctIndex) === Number(option.index)) {
+              pointsForOption = Number(currentState.pointsPerCorrect || 0);
+            } else if (isPartialAnswer(currentState, option.index)) {
+              pointsForOption = Number(currentState.pointsPerAdjacent || 0);
+            }
+          }
+          countEl.textContent = pointsForOption > 0
+            ? `${count} · ${percentage}% · +${pointsForOption} pkt/os.`
+            : `${count} · ${percentage}%`;
+
+          row.append(fill, index, text, countEl);
+          liveOptions.append(row);
+
+          const selectOption = document.createElement('option');
+          selectOption.value = option.index;
+          selectOption.textContent = `${option.index}) ${option.text}`;
+          correctSelect.append(selectOption);
+        }
+
+        if (Number(currentState.correctIndex || 0) > 0) {
+          correctSelect.value = String(currentState.correctIndex);
+          pointsInput.value = String(Math.max(0, Number(currentState.pointsPerCorrect || 0)));
+          adjacentPointsInput.value = String(Math.max(0, Number(currentState.pointsPerAdjacent || 0)));
+          setScoringMode(currentState.scoringMode);
+          manualPartialSelection = new Set(normalizePartialIndices(
+            currentState.partialIndices,
+            options.length,
+            Number(currentState.correctIndex)));
+        } else if (options.some(x => String(x.index) === previousCorrectSelection)) {
+          correctSelect.value = previousCorrectSelection;
+        }
+
+        const isOpen = currentState.status === 'open';
+        const canReveal = currentState.status === 'open' || currentState.status === 'locked';
+        $('lock-button').disabled = !isOpen;
+        $('reveal-button').disabled = !canReveal;
+        correctSelect.disabled = !canReveal;
+        pointsInput.disabled = !canReveal;
+        adjacentPointsInput.disabled = !canReveal;
+        for (const input of scoringModeInputs) {
+          input.disabled = !canReveal;
+        }
+        renderManualPartialChoices(options, canReveal);
+        $('show-button').disabled = Boolean(currentState.visible);
+        $('hide-button').disabled = !Boolean(currentState.visible);
+        $('cancel-button').textContent =
+          currentState.status === 'revealed' ? 'Wyczyść rundę' : 'Anuluj rundę';
+        updateScoringPreview();
+        updateRoundTimer();
+      }
+
+      function readWholePoints(input, fallback) {
+        const value = Number(input.value);
+        if (!Number.isFinite(value)) {
+          return fallback;
+        }
+        return Math.max(0, Math.min(1000, Math.round(value)));
+      }
+
+      function updateScoringPreview() {
+        if (!currentState || currentState.status === 'idle') {
+          scoringPreview.textContent =
+            'Wybierz tryb punktowania. Wpisz 0 punktów częściowych, aby je wyłączyć.';
+          return;
+        }
+
+        const correctIndex = Number(correctSelect.value || currentState.correctIndex || 0);
+        const optionCount = Array.isArray(currentState.options) ? currentState.options.length : 0;
+        const correctPoints = readWholePoints(pointsInput, 3);
+        const partialPoints = Math.min(
+          correctPoints,
+          readWholePoints(adjacentPointsInput, 1));
+        const partialCommands = getPartialIndicesForMode(correctIndex, optionCount)
+          .map(index => `!${index}`);
+
+        if (partialPoints > 0 && partialCommands.length) {
+          const modeLabel = getScoringMode() === 'manual'
+            ? 'ręcznie wybrane'
+            : 'automatycznie obok';
+          scoringPreview.textContent =
+            `Poprawna !${correctIndex}: +${correctPoints} pkt · ` +
+            `${modeLabel} ${partialCommands.join(', ')}: +${partialPoints} pkt · ` +
+            'pozostałe: 0 pkt.';
+        } else {
+          scoringPreview.textContent =
+            `Poprawna !${correctIndex}: +${correctPoints} pkt · pozostałe: 0 pkt.`;
+        }
+      }
+
+      function updateRoundTimer() {
+        if (!currentState || currentState.status !== 'open' || !Number(currentState.closesAt || 0)) {
+          roundTimer.textContent = '';
+          return;
+        }
+
+        const left = Math.max(0, Math.ceil((Number(currentState.closesAt) - Date.now()) / 1000));
+        roundTimer.textContent = `Pozostało ${left} s`;
+        if (left <= 0 &&
+            currentState.roundId &&
+            autoLockRound !== currentState.roundId) {
+          autoLockRound = currentState.roundId;
+          doAction({ quizOperation: 'lockExpired' }, false);
+        }
+      }
+
+      function renderScores() {
+        participantsCount.textContent = `${allScores.length} osób`;
+        scoreEmpty.hidden = allScores.length > 0;
+        scoreTableWrap.hidden = allScores.length === 0;
+        scoreBody.replaceChildren();
+
+        for (const entry of allScores) {
+          const row = document.createElement('tr');
+
+          const position = document.createElement('td');
+          position.className = 'rank-number';
+          position.textContent = entry.position;
+
+          const name = document.createElement('td');
+          name.className = 'score-name';
+          name.textContent = entry.userName || 'Widz';
+          name.title = entry.userName || '';
+
+          const correct = document.createElement('td');
+          correct.textContent = `${Number(entry.correct || 0)}/${Number(entry.answered || 0)}`;
+
+          const points = document.createElement('td');
+          points.className = 'score-points';
+          points.textContent = Number(entry.points || 0);
+
+          const actions = document.createElement('td');
+          const edit = document.createElement('button');
+          edit.className = 'score-edit';
+          edit.type = 'button';
+          edit.textContent = 'Korekta';
+          edit.addEventListener('click', () => editScore(entry));
+          actions.append(edit);
+
+          row.append(position, name, correct, points, actions);
+          scoreBody.append(row);
+        }
+      }
+
+      function editScore(entry) {
+        const answer = window.prompt(
+          `Nowa liczba punktów dla ${entry.userName}:`,
+          String(Number(entry.points || 0))
+        );
+        if (answer === null) {
+          return;
+        }
+        const points = Number(answer);
+        if (!Number.isInteger(points) || points < 0) {
+          showToast('Podaj nieujemną liczbę całkowitą.', 'error');
+          return;
+        }
+        doAction({
+          quizOperation: 'setScore',
+          userId: entry.userId,
+          newPoints: points
+        });
+      }
+
+      function exportCsv() {
+        if (!allScores.length) {
+          showToast('Ranking jest pusty.', 'error');
+          return;
+        }
+
+        const escapeCsv = value => {
+          let text = String(value ?? '');
+          if (/^[=+\-@]/.test(text.trimStart())) {
+            text = `'${text}`;
+          }
+          return `"${text.replace(/"/g, '""')}"`;
+        };
+        const formatTimestamp = value => {
+          const timestamp = Number(value || 0);
+          if (!Number.isFinite(timestamp) || timestamp <= 0) {
+            return '';
+          }
+          try {
+            return new Date(timestamp).toISOString();
+          } catch {
+            return '';
+          }
+        };
+        const rows = [
+          [
+            'Miejsce',
+            'ID użytkownika',
+            'Użytkownik',
+            'Punkty',
+            'Poprawne',
+            'Odpowiedziane',
+            'Ostatnia aktualizacja'
+          ],
+          ...allScores.map(x => [
+            x.position,
+            x.userId,
+            x.userName,
+            x.points,
+            x.correct,
+            x.answered,
+            formatTimestamp(x.lastUpdatedAt)
+          ])
+        ];
+        const csv = '\ufeff' + rows.map(row => row.map(escapeCsv).join(';')).join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `ranking-quiz-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showToast('Ranking zapisany jako CSV.', 'success');
+      }
+
+      function normalizeCsvHeader(value) {
+        return String(value ?? '')
+          .replace(/^\ufeff/, '')
+          .trim()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .replace(/[^a-z0-9#]+/g, '');
+      }
+
+      function countDelimiterInFirstRecord(text, delimiter) {
+        let count = 0;
+        let quoted = false;
+        for (let index = 0; index < text.length; index++) {
+          const char = text[index];
+          if (char === '"') {
+            if (quoted && text[index + 1] === '"') {
+              index++;
+            } else {
+              quoted = !quoted;
+            }
+          } else if (!quoted && char === delimiter) {
+            count++;
+          } else if (!quoted && (char === '\r' || char === '\n')) {
+            break;
+          }
+        }
+        return count;
+      }
+
+      function detectCsvDelimiter(text) {
+        const candidates = [';', ',', '\t'];
+        const ranked = candidates
+          .map(delimiter => ({
+            delimiter,
+            count: countDelimiterInFirstRecord(text, delimiter)
+          }))
+          .sort((a, b) => b.count - a.count);
+        if (!ranked[0] || ranked[0].count === 0) {
+          throw new Error('Nie udało się rozpoznać separatora kolumn CSV.');
+        }
+        return ranked[0].delimiter;
+      }
+
+      function parseCsvRows(text, delimiter) {
+        const source = String(text ?? '').replace(/^\ufeff/, '');
+        const rows = [];
+        let row = [];
+        let cell = '';
+        let quoted = false;
+
+        const finishCell = () => {
+          row.push(cell);
+          cell = '';
+        };
+        const finishRow = () => {
+          finishCell();
+          if (row.some(value => String(value).trim() !== '')) {
+            rows.push(row);
+          }
+          row = [];
+        };
+
+        for (let index = 0; index < source.length; index++) {
+          const char = source[index];
+          if (quoted) {
+            if (char === '"' && source[index + 1] === '"') {
+              cell += '"';
+              index++;
+            } else if (char === '"') {
+              quoted = false;
+            } else {
+              cell += char;
+            }
+            continue;
+          }
+
+          if (char === '"' && cell.length === 0) {
+            quoted = true;
+          } else if (char === delimiter) {
+            finishCell();
+          } else if (char === '\n') {
+            finishRow();
+          } else if (char === '\r') {
+            if (source[index + 1] !== '\n') {
+              finishRow();
+            }
+          } else {
+            cell += char;
+          }
+        }
+
+        if (quoted) {
+          throw new Error('Plik CSV zawiera niedomknięty cudzysłów.');
+        }
+        if (cell.length > 0 || row.length > 0) {
+          finishRow();
+        }
+        return rows;
+      }
+
+      function findCsvColumn(headers, aliases) {
+        const accepted = new Set(aliases.map(normalizeCsvHeader));
+        return headers.findIndex(header => accepted.has(normalizeCsvHeader(header)));
+      }
+
+      function parseImportedWholeNumber(value, label, rowNumber, fallback = 0) {
+        const text = String(value ?? '').trim().replace(/\s+/g, '');
+        if (!text) {
+          return fallback;
+        }
+        const number = Number(text);
+        if (!Number.isInteger(number) || number < 0 || number > MAX_SCORE_VALUE) {
+          throw new Error(
+            `Wiersz ${rowNumber}: pole „${label}” musi być nieujemną liczbą całkowitą.`
+          );
+        }
+        return number;
+      }
+
+      function parseImportedTimestamp(value) {
+        const text = String(value ?? '').trim();
+        if (!text) {
+          return 0;
+        }
+        if (/^\d+$/.test(text)) {
+          const numeric = Number(text);
+          return Number.isSafeInteger(numeric) && numeric > 0 ? numeric : 0;
+        }
+        const parsed = Date.parse(text);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+      }
+
+      function parseRankingCsv(text) {
+        const delimiter = detectCsvDelimiter(text);
+        const rows = parseCsvRows(text, delimiter);
+        if (rows.length < 2) {
+          throw new Error('Plik CSV nie zawiera żadnych wpisów rankingu.');
+        }
+
+        const headers = rows[0];
+        const columns = {
+          userId: findCsvColumn(headers, [
+            'ID użytkownika',
+            'User ID',
+            'UserId',
+            'Twitch User ID',
+            'ID widza'
+          ]),
+          userName: findCsvColumn(headers, [
+            'Użytkownik',
+            'Nazwa użytkownika',
+            'Widz',
+            'Username',
+            'User name',
+            'Login'
+          ]),
+          points: findCsvColumn(headers, ['Punkty', 'Points', 'Score']),
+          correct: findCsvColumn(headers, [
+            'Poprawne',
+            'Correct',
+            'Correct answers',
+            'CorrectAnswers'
+          ]),
+          answered: findCsvColumn(headers, [
+            'Odpowiedziane',
+            'Answered',
+            'Answered questions',
+            'AnsweredQuestions'
+          ]),
+          lastUpdatedAt: findCsvColumn(headers, [
+            'Ostatnia aktualizacja',
+            'Last updated',
+            'LastUpdatedAt'
+          ])
+        };
+
+        if (columns.userName < 0 || columns.points < 0) {
+          throw new Error(
+            'Brakuje wymaganych kolumn „Użytkownik” i „Punkty”.'
+          );
+        }
+
+        const dataRows = rows.slice(1)
+          .filter(row => row.some(value => String(value).trim() !== ''));
+        if (dataRows.length === 0) {
+          throw new Error('Plik CSV nie zawiera żadnych wpisów rankingu.');
+        }
+        if (dataRows.length > MAX_IMPORTED_SCORES) {
+          throw new Error(
+            `Plik ma zbyt wiele wpisów. Maksimum jednego importu to ${MAX_IMPORTED_SCORES}.`
+          );
+        }
+
+        const seenIds = new Set();
+        const seenNames = new Set();
+        const scores = dataRows.map((row, index) => {
+          const rowNumber = index + 2;
+          const read = column => column >= 0 ? row[column] : '';
+          const userName = String(read(columns.userName) ?? '')
+            .replace(/[\r\n]+/g, ' ')
+            .trim();
+          const userId = String(read(columns.userId) ?? '').trim();
+
+          if (!userName) {
+            throw new Error(`Wiersz ${rowNumber}: brakuje nazwy użytkownika.`);
+          }
+          if (userName.length > 80) {
+            throw new Error(`Wiersz ${rowNumber}: nazwa użytkownika jest zbyt długa.`);
+          }
+          if (/^[=+\-@]/.test(userName.trimStart()) ||
+              /[\u0000-\u001f\u007f]/.test(userName)) {
+            throw new Error(`Wiersz ${rowNumber}: nazwa użytkownika jest nieprawidłowa.`);
+          }
+          if (userId.length > 160 ||
+              /[\u0000-\u001f\u007f]/.test(userId) ||
+              /^[=+\-@]/.test(userId.trimStart())) {
+            throw new Error(`Wiersz ${rowNumber}: ID użytkownika jest nieprawidłowe.`);
+          }
+
+          const points = parseImportedWholeNumber(
+            read(columns.points),
+            'Punkty',
+            rowNumber
+          );
+          const correct = parseImportedWholeNumber(
+            read(columns.correct),
+            'Poprawne',
+            rowNumber
+          );
+          const answered = parseImportedWholeNumber(
+            read(columns.answered),
+            'Odpowiedziane',
+            rowNumber
+          );
+          if (correct > answered) {
+            throw new Error(
+              `Wiersz ${rowNumber}: „Poprawne” nie może przekraczać „Odpowiedziane”.`
+            );
+          }
+
+          const normalizedName = userName.toLocaleLowerCase('pl')
+            .replace(/\s+/g, ' ');
+          if (seenNames.has(normalizedName)) {
+            throw new Error(
+              `Wiersz ${rowNumber}: zduplikowany użytkownik „${userName}”.`
+            );
+          }
+          seenNames.add(normalizedName);
+          if (userId) {
+            const normalizedId = userId.toLowerCase();
+            if (seenIds.has(normalizedId)) {
+              throw new Error(
+                `Wiersz ${rowNumber}: zduplikowane ID użytkownika „${userId}”.`
+              );
+            }
+            seenIds.add(normalizedId);
+          }
+
+          return {
+            userId,
+            userName,
+            points,
+            correctAnswers: correct,
+            answeredQuestions: answered,
+            lastUpdatedAt: parseImportedTimestamp(read(columns.lastUpdatedAt))
+          };
+        });
+
+        return {
+          scores,
+          legacyWithoutIds: columns.userId < 0 ||
+            scores.some(entry => !entry.userId),
+          totalPoints: scores.reduce((sum, entry) => sum + entry.points, 0)
+        };
+      }
+
+      function updateImportModeNote() {
+        if (!pendingScoreImport) {
+          return;
+        }
+        const mode = importModeInputs.find(input => input.checked)?.value || 'replace';
+        const modeText = mode === 'merge'
+          ? 'Obecne osoby pozostaną, a wartości z CSV zastąpią dane pasujących osób.'
+          : 'Obecny ranking zostanie w całości zastąpiony zawartością CSV.';
+        const legacyText = pendingScoreImport.legacyWithoutIds
+          ? ' Starszy format bez pełnych ID zostanie dopasowany po nazwach widzów.'
+          : ' Plik zawiera ID widzów, więc kopia zostanie odtworzona dokładnie.';
+        importNote.textContent =
+          modeText + legacyText +
+          ' Przed zmianą silnik zapisze kopię do funkcji „Cofnij ostatni import”.';
+      }
+
+      function clearPendingScoreImport() {
+        pendingScoreImport = null;
+        importPreview.hidden = true;
+        importSummary.textContent = '';
+        importNote.textContent = '';
+        importScoresFile.value = '';
+      }
+
+      async function prepareScoreImport(file) {
+        if (!file) {
+          return;
+        }
+        if (file.size > MAX_IMPORT_FILE_BYTES) {
+          showToast('Plik CSV jest zbyt duży.', 'error');
+          clearPendingScoreImport();
+          return;
+        }
+
+        try {
+          const parsed = parseRankingCsv(await file.text());
+          pendingScoreImport = {
+            ...parsed,
+            fileName: file.name || 'ranking.csv'
+          };
+          importSummary.textContent =
+            `${pendingScoreImport.fileName}: ${parsed.scores.length} osób · ` +
+            `${parsed.totalPoints} pkt łącznie.`;
+          importPreview.hidden = false;
+          updateImportModeNote();
+          importPreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          showToast('Plik CSV odczytany. Wybierz sposób importu.', 'success');
+        } catch (error) {
+          clearPendingScoreImport();
+          showToast(error?.message || 'Nie udało się odczytać pliku CSV.', 'error');
+        } finally {
+          importScoresFile.value = '';
+        }
+      }
+
+      function confirmScoreImport() {
+        if (!pendingScoreImport) {
+          showToast('Najpierw wybierz plik CSV.', 'error');
+          return;
+        }
+        if (!isConnected) {
+          showToast('Najpierw połącz panel ze Streamer.bot.', 'error');
+          return;
+        }
+
+        const mode = importModeInputs.find(input => input.checked)?.value || 'replace';
+        const question = mode === 'merge'
+          ? `Połączyć ${pendingScoreImport.scores.length} wpisów z obecnym rankingiem? ` +
+            'Dane z CSV zastąpią wartości pasujących osób.'
+          : `Zastąpić obecny ranking (${allScores.length} osób) ` +
+            `zawartością CSV (${pendingScoreImport.scores.length} osób)?`;
+        if (!window.confirm(
+            question + '\n\nPrzed zmianą zostanie zapisana kopia do cofnięcia.')) {
+          return;
+        }
+
+        const scoresJson = JSON.stringify(pendingScoreImport.scores);
+        if (scoresJson.length > 7500000) {
+          showToast('Dane importu są zbyt duże do wysłania.', 'error');
+          return;
+        }
+
+        const sent = doAction({
+          quizOperation: 'importScores',
+          importMode: mode,
+          confirmText: mode === 'merge' ? 'IMPORT_MERGE' : 'IMPORT_REPLACE',
+          scoresJson
+        });
+        if (sent) {
+          clearPendingScoreImport();
+        }
+      }
+
+      function restoreScoresBeforeImport() {
+        const confirmation = window.prompt(
+          'Przywrócić ranking sprzed ostatniego importu? Wpisz COFNIJ:'
+        );
+        if (confirmation !== 'COFNIJ') {
+          if (confirmation !== null) {
+            showToast('Przywracanie anulowane — nie wpisano COFNIJ.', 'error');
+          }
+          return;
+        }
+        doAction({
+          quizOperation: 'restoreImportBackup',
+          confirmText: 'COFNIJ'
+        });
+      }
+
+      function resetScores() {
+        const confirmation = window.prompt(
+          'To usunie wszystkie punkty. Wpisz RESET, aby potwierdzić:'
+        );
+        if (confirmation !== 'RESET') {
+          if (confirmation !== null) {
+            showToast('Reset anulowany - nie wpisano RESET.', 'error');
+          }
+          return;
+        }
+        doAction({ quizOperation: 'resetScores', confirmText: 'RESET' });
+      }
+
+      function captureFormData() {
+        return {
+          question: questionInput.value,
+          answers: collectAnswers(),
+          duration: durationInput.value,
+          correctPoints: pointsInput.value,
+          adjacentPoints: adjacentPointsInput.value,
+          scoringMode: getScoringMode(),
+          manualPartialIndices: [...manualPartialSelection].sort((a, b) => a - b)
+        };
+      }
+
+      function clampWholeNumber(value, fallback, max) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) {
+          return fallback;
+        }
+        return Math.max(0, Math.min(max, Math.round(number)));
+      }
+
+      function normalizeFormData(value) {
+        const source = value && typeof value === 'object' ? value : {};
+        const rawAnswers = Array.isArray(source.answers)
+          ? source.answers.slice(0, MAX_ANSWERS)
+          : [];
+        const answers = rawAnswers.length >= MIN_ANSWERS
+          ? rawAnswers.map(answer => String(answer ?? '').slice(0, 240))
+          : ['', '', '', ''];
+
+        return {
+          question: String(source.question ?? '').slice(0, 500),
+          answers,
+          duration: String(clampWholeNumber(source.duration, 60, 3600)),
+          correctPoints: String(clampWholeNumber(source.correctPoints, 3, 1000)),
+          adjacentPoints: String(clampWholeNumber(source.adjacentPoints, 1, 1000)),
+          scoringMode: normalizeScoringMode(source.scoringMode),
+          manualPartialIndices: normalizePartialIndices(
+            source.manualPartialIndices,
+            answers.length,
+            0)
+        };
+      }
+
+      function applyFormData(value, saveAsDraft = true) {
+        const data = normalizeFormData(value);
+        questionInput.value = data.question;
+        durationInput.value = data.duration;
+        pointsInput.value = data.correctPoints;
+        adjacentPointsInput.value = data.adjacentPoints;
+        setScoringMode(data.scoringMode);
+        manualPartialSelection = new Set(data.manualPartialIndices);
+
+        answersEditor.replaceChildren();
+        data.answers.forEach(addAnswer);
+
+        if (saveAsDraft) {
+          persistDraft();
+        }
+        updateScoringPreview();
+      }
+
+      function persistDraft() {
+        try {
+          localStorage.setItem(
+            DRAFT_STORAGE_KEY,
+            JSON.stringify(captureFormData()));
+          return true;
+        } catch (error) {
+          console.warn('Nie udało się zapisać szkicu.', error);
+          return false;
+        }
+      }
+
+      function loadDraft() {
+        let draft = null;
+        try {
+          draft = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
+        } catch {
+          draft = null;
+        }
+        applyFormData(draft, false);
+      }
+
+      function createTemplateId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+        return `template-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function normalizeTemplateRecord(value) {
+        if (!value || typeof value !== 'object') {
+          return null;
+        }
+        const name = String(value.name ?? '').trim().slice(0, 80);
+        if (!name) {
+          return null;
+        }
+        return {
+          id: String(value.id || createTemplateId()),
+          name,
+          data: normalizeFormData(value.data),
+          createdAt: Number(value.createdAt || Date.now()),
+          updatedAt: Number(value.updatedAt || value.createdAt || Date.now())
+        };
+      }
+
+      function loadTemplates() {
+        let stored = [];
+        try {
+          const parsed = JSON.parse(localStorage.getItem(TEMPLATES_STORAGE_KEY) || '[]');
+          stored = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          stored = [];
+        }
+
+        const seenIds = new Set();
+        templates = stored
+          .map(normalizeTemplateRecord)
+          .filter(template => {
+            if (!template || seenIds.has(template.id)) {
+              return false;
+            }
+            seenIds.add(template.id);
+            return true;
+          })
+          .slice(0, MAX_TEMPLATES);
+        renderTemplateList();
+      }
+
+      function saveTemplates(nextTemplates, preferredId = '') {
+        try {
+          localStorage.setItem(
+            TEMPLATES_STORAGE_KEY,
+            JSON.stringify(nextTemplates));
+        } catch (error) {
+          console.warn('Nie udało się zapisać szablonów quizu.', error);
+          showToast('Nie udało się zapisać szablonów w tej przeglądarce.', 'error');
+          return false;
+        }
+
+        templates = nextTemplates;
+        renderTemplateList(preferredId);
+        return true;
+      }
+
+      function templateCountText(count) {
+        if (count === 1) {
+          return '1 zapisany szablon';
+        }
+        if (count >= 2 && count <= 4) {
+          return `${count} zapisane szablony`;
+        }
+        return `${count} zapisanych szablonów`;
+      }
+
+      function renderTemplateList(preferredId = templateSelect.value) {
+        const ordered = [...templates].sort((a, b) =>
+          b.updatedAt - a.updatedAt ||
+          a.name.localeCompare(b.name, 'pl', { sensitivity: 'base' }));
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = ordered.length
+          ? '- Wybierz zapisany szablon -'
+          : '- Brak zapisanych szablonów -';
+        templateSelect.replaceChildren(placeholder);
+
+        for (const template of ordered) {
+          const option = document.createElement('option');
+          option.value = template.id;
+          option.textContent = template.name;
+          templateSelect.append(option);
+        }
+
+        templateSelect.value = templates.some(x => x.id === preferredId)
+          ? preferredId
+          : '';
+        templateSummary.textContent = templateCountText(templates.length);
+        updateTemplateButtons();
+      }
+
+      function getSelectedTemplate() {
+        return templates.find(template => template.id === templateSelect.value) || null;
+      }
+
+      function updateTemplateButtons() {
+        const hasSelection = Boolean(getSelectedTemplate());
+        loadTemplateButton.disabled = !hasSelection;
+        overwriteTemplateButton.disabled = !hasSelection;
+        deleteTemplateButton.disabled = !hasSelection;
+      }
+
+      function validateCurrentTemplateData() {
+        const data = normalizeFormData(captureFormData());
+        const answers = data.answers.map(answer => answer.trim());
+        if (data.question.trim().length < 2) {
+          showToast('Najpierw wpisz treść pytania.', 'error');
+          questionInput.focus();
+          return null;
+        }
+        if (answers.filter(Boolean).length < MIN_ANSWERS ||
+            answers.some(answer => !answer)) {
+          showToast('Uzupełnij wszystkie odpowiedzi albo usuń puste pola.', 'error');
+          return null;
+        }
+        return { ...data, question: data.question.trim(), answers };
+      }
+
+      function createTemplate() {
+        const name = templateNameInput.value.trim().slice(0, 80);
+        if (!name) {
+          showToast('Wpisz nazwę nowego szablonu.', 'error');
+          templateNameInput.focus();
+          return;
+        }
+        if (templates.length >= MAX_TEMPLATES) {
+          showToast(`Możesz zapisać maksymalnie ${MAX_TEMPLATES} szablonów.`, 'error');
+          return;
+        }
+        if (templates.some(template =>
+          template.name.localeCompare(name, 'pl', { sensitivity: 'base' }) === 0)) {
+          showToast('Szablon o tej nazwie już istnieje. Wybierz go i użyj „Nadpisz”.', 'error');
+          return;
+        }
+
+        const data = validateCurrentTemplateData();
+        if (!data) {
+          return;
+        }
+        const now = Date.now();
+        const template = {
+          id: createTemplateId(),
+          name,
+          data,
+          createdAt: now,
+          updatedAt: now
+        };
+        if (saveTemplates([template, ...templates], template.id)) {
+          templateNameInput.value = '';
+          showToast(`Zapisano szablon „${name}”.`, 'success');
+        }
+      }
+
+      function loadSelectedTemplate() {
+        const template = getSelectedTemplate();
+        if (!template) {
+          return;
+        }
+        if (currentState && currentState.status !== 'idle') {
+          showToast('Najpierw zakończ albo wyczyść bieżącą rundę.', 'error');
+          return;
+        }
+        applyFormData(template.data);
+        questionInput.focus();
+        showToast(`Wczytano szablon „${template.name}”.`, 'success');
+      }
+
+      function overwriteSelectedTemplate() {
+        const template = getSelectedTemplate();
+        if (!template) {
+          return;
+        }
+        const data = validateCurrentTemplateData();
+        if (!data) {
+          return;
+        }
+        if (!window.confirm(`Nadpisać szablon „${template.name}” obecną treścią?`)) {
+          return;
+        }
+        const next = templates.map(item => item.id === template.id
+          ? { ...item, data, updatedAt: Date.now() }
+          : item);
+        if (saveTemplates(next, template.id)) {
+          showToast(`Nadpisano szablon „${template.name}”.`, 'success');
+        }
+      }
+
+      function deleteSelectedTemplate() {
+        const template = getSelectedTemplate();
+        if (!template) {
+          return;
+        }
+        if (!window.confirm(`Usunąć szablon „${template.name}”?`)) {
+          return;
+        }
+        const next = templates.filter(item => item.id !== template.id);
+        if (saveTemplates(next)) {
+          showToast(`Usunięto szablon „${template.name}”.`, 'success');
+        }
+      }
+
+      function showToast(message, type = '') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`.trim();
+        toast.textContent = message;
+        toastArea.append(toast);
+        window.setTimeout(() => toast.remove(), 4600);
+      }
+
+      async function copyText(value) {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(value);
+          return;
+        }
+
+        const temporary = document.createElement('textarea');
+        temporary.value = value;
+        temporary.setAttribute('readonly', '');
+        temporary.style.position = 'fixed';
+        temporary.style.opacity = '0';
+        document.body.append(temporary);
+        temporary.select();
+        const copied = document.execCommand('copy');
+        temporary.remove();
+        if (!copied) {
+          throw new Error('Przeglądarka odmówiła dostępu do schowka.');
+        }
+      }
+
+      async function copyAuthenticatedOverlayUrl() {
+        if (!isAuthenticated || !currentPassword) {
+          showToast('Najpierw połącz panel poprawnym hasłem.', 'error');
+          return;
+        }
+
+        const overlayUrl = new URL('overlay.html', location.href);
+        overlayUrl.search = '?v=130';
+        overlayUrl.hash = new URLSearchParams({
+          password: currentPassword,
+          ws: currentWsUrl
+        }).toString();
+
+        try {
+          await copyText(overlayUrl.href);
+          showToast(
+            'Skopiowano uwierzytelniony URL overlayu. Wklej go do źródła przeglądarkowego OBS.',
+            'success'
+          );
+        } catch (error) {
+          showToast(error?.message || 'Nie udało się skopiować URL overlayu.', 'error');
+        }
+      }
+
+      addAnswerButton.addEventListener('click', () => {
+        addAnswer('');
+        const inputs = answersEditor.querySelectorAll('.answer-input');
+        inputs[inputs.length - 1].focus();
+        persistDraft();
+      });
+      startButton.addEventListener('click', startQuiz);
+      $('save-draft').addEventListener('click', () => {
+        if (persistDraft()) {
+          showToast(
+            'Szkic zapisany. Wczyta się automatycznie przy następnym otwarciu panelu.',
+            'success');
+        } else {
+          showToast('Nie udało się zapisać szkicu w tej przeglądarce.', 'error');
+        }
+      });
+      templateSelect.addEventListener('change', updateTemplateButtons);
+      templateSelect.addEventListener('dblclick', loadSelectedTemplate);
+      loadTemplateButton.addEventListener('click', loadSelectedTemplate);
+      overwriteTemplateButton.addEventListener('click', overwriteSelectedTemplate);
+      deleteTemplateButton.addEventListener('click', deleteSelectedTemplate);
+      $('save-template').addEventListener('click', createTemplate);
+      templateNameInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          createTemplate();
+        }
+      });
+      questionInput.addEventListener('input', persistDraft);
+      durationInput.addEventListener('input', persistDraft);
+      correctSelect.addEventListener('change', () => {
+        const options = currentState && Array.isArray(currentState.options)
+          ? currentState.options
+          : [];
+        const canReveal = currentState &&
+          (currentState.status === 'open' || currentState.status === 'locked');
+        renderManualPartialChoices(options, Boolean(canReveal));
+        persistDraft();
+        updateScoringPreview();
+      });
+      for (const input of scoringModeInputs) {
+        input.addEventListener('change', () => {
+          const options = currentState && Array.isArray(currentState.options)
+            ? currentState.options
+            : [];
+          const canReveal = currentState &&
+            (currentState.status === 'open' || currentState.status === 'locked');
+          renderManualPartialChoices(options, Boolean(canReveal));
+          persistDraft();
+          updateScoringPreview();
+        });
+      }
+      pointsInput.addEventListener('input', () => {
+        persistDraft();
+        updateScoringPreview();
+      });
+      adjacentPointsInput.addEventListener('input', () => {
+        persistDraft();
+        updateScoringPreview();
+      });
+      $('lock-button').addEventListener('click', () => doAction({ quizOperation: 'lock' }));
+      $('show-button').addEventListener('click', () => doAction({ quizOperation: 'show' }));
+      $('hide-button').addEventListener('click', () => doAction({ quizOperation: 'hide' }));
+      $('cancel-button').addEventListener('click', () => {
+        const message = currentState && currentState.status === 'revealed'
+          ? 'Wyczyścić zakończoną rundę? Przyznane punkty pozostaną w rankingu.'
+          : 'Anulować bieżącą rundę bez przyznawania punktów?';
+        if (window.confirm(message)) {
+          doAction({ quizOperation: 'cancel' });
+        }
+      });
+      $('reveal-button').addEventListener('click', () => {
+        const correctPoints = readWholePoints(pointsInput, 3);
+        const partialPoints = readWholePoints(adjacentPointsInput, 1);
+        const scoringMode = getScoringMode();
+        const correctIndex = Number(correctSelect.value || 0);
+        const optionCount = currentState && Array.isArray(currentState.options)
+          ? currentState.options.length
+          : 0;
+        const partialIndices = getPartialIndicesForMode(correctIndex, optionCount);
+
+        if (partialPoints > correctPoints) {
+          showToast('Punkty częściowe nie mogą być wyższe niż za poprawną odpowiedź.', 'error');
+          adjacentPointsInput.focus();
+          return;
+        }
+        if (scoringMode === 'manual' &&
+            partialPoints > 0 &&
+            partialIndices.length === 0) {
+          showToast('Zaznacz przynajmniej jedną odpowiedź za mniej punktów albo wpisz 0.', 'error');
+          manualPartialPicker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+
+        pointsInput.value = String(correctPoints);
+        adjacentPointsInput.value = String(partialPoints);
+        persistDraft();
+        doAction({
+          quizOperation: 'reveal',
+          correctIndex,
+          pointsPerCorrect: correctPoints,
+          pointsPerAdjacent: partialPoints,
+          scoringMode,
+          partialIndicesJson: JSON.stringify(partialIndices)
+        });
+      });
+      $('refresh-scores').addEventListener('click', requestGlobals);
+      $('export-scores').addEventListener('click', exportCsv);
+      $('import-scores').addEventListener('click', () => importScoresFile.click());
+      importScoresFile.addEventListener('change', () => {
+        prepareScoreImport(importScoresFile.files?.[0]);
+      });
+      importModeInputs.forEach(input => {
+        input.addEventListener('change', updateImportModeNote);
+      });
+      $('confirm-import').addEventListener('click', confirmScoreImport);
+      $('cancel-import').addEventListener('click', clearPendingScoreImport);
+      $('restore-import-backup').addEventListener('click', restoreScoresBeforeImport);
+      $('reset-scores').addEventListener('click', resetScores);
+      secureConnectButton.addEventListener('click', connect);
+      copyOverlayUrlButton.addEventListener('click', copyAuthenticatedOverlayUrl);
+      $('reconnect-button').addEventListener('click', connect);
+      passwordInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          connect();
+        }
+      });
+
+      window.setInterval(updateRoundTimer, 250);
+      window.setInterval(requestGlobals, 700);
+      window.addEventListener('beforeunload', () => {
+        reconnectEnabled = false;
+        clearTimeout(reconnectTimer);
+        if (socket) {
+          const activeSocket = socket;
+          socket = null;
+          activeSocket.onclose = null;
+          activeSocket.close();
+        }
+      });
+
+      wsUrlInput.value = getWsUrl();
+      loadTemplates();
+      loadDraft();
+      setConnection(false, 'Wpisz hasło WebSocket');
+      if (!isTrustedPageOrigin()) {
+        setConnection(false, 'Otwórz panel z 127.0.0.1');
+      }
+    })();
+  </script>
+</body>
+</html>
