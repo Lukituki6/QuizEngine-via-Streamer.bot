@@ -69,9 +69,8 @@ administracyjne.
 | `PODGLAD_OVERLAYU.url` | Skrót do demonstracyjnego wyglądu overlayu |
 | `START_TUTAJ.txt` | Krótka ściąga instalacyjna |
 | `README.md` | Pełna instrukcja |
-| `CHANGELOG.md` | Historia wydania |
 | `LICENSE` | Licencja MIT |
-| `.gitignore` | Chroni kopie rankingu i pliki lokalne |
+
 
 Projekt nie pobiera bibliotek JavaScript i nie wymaga `npm`, Node.js ani
 kompilowania strony.
