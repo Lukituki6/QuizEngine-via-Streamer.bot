@@ -1,4 +1,4 @@
-# Quiz Widzów do Streamer.bot + OBS (overlay)
+# Quiz do Streamer.bot + OBS (overlay)
 
 Lokalny system quizowy: panel sterowania w przeglądarce,
 overlay do OBS, głosowanie z czatu, punktacja i trwały ranking.
