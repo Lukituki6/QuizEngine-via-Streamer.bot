@@ -16,7 +16,6 @@ Przez dużą ilość błędów jak i skomplikowanych funkcji, postanowiłem koń
 - [Zawartość repozytorium](#zawartość-repozytorium)
 - [Wymagania](#wymagania)
 - [Instalacja od zera](#instalacja-od-zera)
-- [Aktualizacja z v1.2.3 Custom Hardened](#aktualizacja-z-v123-custom-hardened)
 - [Pierwszy test](#pierwszy-test)
 - [Obsługa panelu](#obsługa-panelu)
 - [Komendy czatu](#komendy-czatu)
