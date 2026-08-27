@@ -66,7 +66,6 @@ administracyjne.
 | `overlay.html` | Źródło przeglądarkowe do OBS |
 | `OTWORZ_PANEL.url` | Skrót do panelu po konfiguracji serwera HTTP |
 | `PODGLAD_OVERLAYU.url` | Skrót do demonstracyjnego wyglądu overlayu |
-| `START_TUTAJ.txt` | Krótka ściąga instalacyjna |
 | `README.md` | Pełna instrukcja |
 | `LICENSE` | Licencja MIT |
 
